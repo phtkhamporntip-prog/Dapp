@@ -105,7 +105,7 @@ if (!envCheck.valid && import.meta.env.PROD) {
               <ConsentBanner />
               <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
-                  <Route path={ROUTES.HOME} element={<MainApp />} />
+                  <Route path={`${ROUTES.HOME}*`} element={<MainApp />} />
                   {/* Admin route - always registered, but shows disabled message if feature not enabled */}
                   <Route
                     path={ROUTES.ADMIN}
