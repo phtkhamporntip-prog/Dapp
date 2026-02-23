@@ -5,7 +5,7 @@
 export * from '../lib/firebase.js';
 
 // Legacy API Service (for backward compatibility)
-export * from './api.service.js';
+export * from '../lib/api.js';
 
 // TURN Server Service
 export * from './turn.service.js';
