@@ -1,0 +1,29 @@
+# Copilot Setup Steps for Snipe
+
+# This YAML file documents the recommended steps for setting up GitHub Copilot in the Snipe workspace.
+# It is intended for onboarding, troubleshooting, and ensuring Copilot is configured for optimal productivity.
+
+steps:
+  - step: Install GitHub Copilot extension in VS Code
+    description: >
+      Open Extensions Marketplace, search for 'GitHub Copilot', and install. Ensure you are signed in with your GitHub account.
+  - step: Verify Copilot activation
+    description: >
+      Confirm Copilot is enabled in VS Code status bar. If not, check extension settings and sign-in status.
+  - step: Configure workspace settings
+    description: >
+      Set workspace-specific preferences for Copilot in .vscode/settings.json, such as suggestion visibility and inline completions.
+  - step: Review Copilot instructions
+    description: >
+      Read .github/copilot-instructions.md for Snipe-specific usage patterns, architectural notes, and best practices.
+  - step: Test Copilot suggestions
+    description: >
+      Open a file in Onchainweb/src/services/ and verify Copilot provides relevant suggestions. Adjust settings if needed.
+  - step: Troubleshoot issues
+    description: >
+      If Copilot is not working, check network connectivity, extension logs, and GitHub account permissions. Consult ADMIN_ACCESS_QUICK_FIX.md for admin troubleshooting.
+  - step: Update Copilot extension
+    description: >
+      Regularly update the Copilot extension to benefit from new features and bug fixes.
+
+# For advanced configuration, see docs/README_SETUP.md and .github/copilot-instructions.md.

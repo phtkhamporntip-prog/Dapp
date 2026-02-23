@@ -1,0 +1,34 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "deno",
+			"command": "bundle",
+			"problemMatcher": [
+				"$deno"
+			],
+			"group": "build",
+			"label": "deno: bundle"
+		},
+		{
+			"type": "deno",
+			"command": "bundle",
+			"problemMatcher": [
+				"$deno"
+			],
+			"group": "build",
+			"label": "deno: bundle"
+		},
+		{
+			"type": "markdownlint",
+			"problemMatcher": [
+				"$markdownlint"
+			],
+			"label": "markdownlint: Lint all Markdown files in the workspace with markdownlint",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
+	]
+}
