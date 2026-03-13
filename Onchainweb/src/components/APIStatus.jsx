@@ -69,8 +69,9 @@ export function useAPIHealth(checkInterval = 0) {
 
 /**
  * API Status Banner Component
- * Shows connection status at the top of the page
- * Only displays when legacy API is enabled (ENABLE_LEGACY_API=true)
+ * Shows connection status at the top of the page.
+ * Only displays when the legacy API feature flag (FEATURES.ENABLE_LEGACY_API) is enabled.
+ * The flag is configured in src/config/constants.js.
  */
 export function APIStatusBanner({ onDismiss }) {
     // Don't show banner if legacy API is disabled (Firebase-only mode)
