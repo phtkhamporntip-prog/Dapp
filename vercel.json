@@ -1,5 +1,6 @@
 {
-    "buildCommand": "cd Onchainweb && npm install && npm run build",
+    "installCommand": "cd Onchainweb && npm install",
+    "buildCommand": "cd Onchainweb && npm run build",
     "outputDirectory": "Onchainweb/dist",
     "rewrites": [
         {
