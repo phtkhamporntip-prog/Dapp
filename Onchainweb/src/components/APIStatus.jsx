@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { FEATURES } from '../config/constants.js';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://snipe-api.onrender.com/api';
 
@@ -69,14 +68,10 @@ export function useAPIHealth(checkInterval = 0) {
 
 /**
  * API Status Banner Component
- * Shows connection status at the top of the page.
- * Only displays when the legacy API feature flag (FEATURES.ENABLE_LEGACY_API) is enabled.
- * The flag is configured in src/config/constants.js.
+ * Shows legacy API connection status at the top of the page.
+ * Uses the API base URL derived from VITE_API_BASE (or the default Render URL).
  */
 export function APIStatusBanner({ onDismiss }) {
-    // Don't show banner if legacy API is disabled (Firebase-only mode)
-    if (!FEATURES.ENABLE_LEGACY_API) return null;
-
     return <APIStatusBannerInner onDismiss={onDismiss} />;
 }
 
