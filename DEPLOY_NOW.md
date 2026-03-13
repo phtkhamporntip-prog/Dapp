@@ -194,13 +194,14 @@ If issues occur after deployment:
 ### Quick Rollback to Previous Version
 
 ```bash
-# Revert to previous commit
+# Revert the latest commit
 git revert HEAD
 git push origin main
 
-# Or rollback to specific version
-git reset --hard <previous-commit-hash>
-git push --force origin main
+# Or safely rollback to a specific earlier state by reverting a range
+# (this creates new commits that undo the changes without rewriting history)
+git revert <target-commit-hash>..HEAD
+git push origin main
 ```
 
 ### Vercel Rollback
