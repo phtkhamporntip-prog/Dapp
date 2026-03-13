@@ -233,9 +233,9 @@ VITE_FIREBASE_MEASUREMENT_ID=✅ Set
 
 ### WalletConnect Configuration
 ```env
-VITE_WALLETCONNECT_PROJECT_ID=✅ Set (42039c73d0dacb66d82c12faabf27c9b)
+VITE_WALLETCONNECT_PROJECT_ID=✅ Set (<YOUR_WALLETCONNECT_PROJECT_ID>)
 ```
-
+Set `VITE_WALLETCONNECT_PROJECT_ID` in your local `.env` file using your own WalletConnect Cloud Project ID from https://cloud.walletconnect.com.
 ### Admin Configuration
 ```env
 VITE_ENABLE_ADMIN=✅ true
