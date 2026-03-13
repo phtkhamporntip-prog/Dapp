@@ -1,0 +1,7 @@
+specVersion: v1
+location: us-central1
+serviceAccount: firebase-adminsdk-onchainweb-37d30@onchainweb-37d30.iam.gserviceaccount.com
+schema:
+  file: schema.gql
+connectorDirs:
+  - connectors

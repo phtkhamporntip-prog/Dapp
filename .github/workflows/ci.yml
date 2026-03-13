@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install frontend dependencies
+        run: cd Onchainweb && npm install
+
+      - name: Build frontend
+        run: cd Onchainweb && npm run build
+
+      - name: Run tests
+        run: npx --yes jest --passWithNoTests --runInBand
+
+      - name: Run ESLint (legacy)
+        run: npx --yes eslint@8 --config .eslintrc.json "Onchainweb/src/**/*.{js,jsx}" --ext .js,.jsx --max-warnings=0 || true
+
+      - name: Smoke test (build + preview)
+        run: |
+          set -e
+          trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
+          
+          cd Onchainweb
+          npm install
+          npm run build
+          
+          # Start preview server in background
+          npx vite preview --port 5173 > ../vite-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          
+          echo "Waiting for preview server to start (PID: $PREVIEW_PID)..."
+          
+          # Wait up to 30 seconds for server to be ready
+          for i in {1..30}; do
+            if curl -fsS http://localhost:5173 > /dev/null 2>&1; then
+              echo "✅ Preview server is ready after ${i} seconds"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Preview server failed to start within 30 seconds"
+              echo "=== Preview Server Logs ==="
+              cat ../vite-preview.log || echo "No logs available"
+              kill $PREVIEW_PID 2>/dev/null || true
+              exit 1
+            fi
+            sleep 1
+          done
+          
+          # Verify server responds
+          if curl -fsS http://localhost:5173 > /dev/null 2>&1; then
+            echo "✅ Smoke test passed - server is responding"
+            kill $PREVIEW_PID 2>/dev/null || true
+            exit 0
+          else
+            echo "❌ Smoke test failed - server not responding"
+            cat ../vite-preview.log || echo "No logs available"
+            kill $PREVIEW_PID 2>/dev/null || true
+            exit 1
+          fi

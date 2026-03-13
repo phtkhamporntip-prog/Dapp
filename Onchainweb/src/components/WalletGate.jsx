@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import { userAPI } from '../lib/api'
+import { useState, useEffect } from 'react'
+import { createUser, getUserById } from '../services/database.service'
+import { logger } from '../utils/logger'
 
 // Web3 Wallet Gate - User MUST connect wallet to see any content
 export default function WalletGate({ onConnect, children }) {
@@ -11,51 +12,85 @@ export default function WalletGate({ onConnect, children }) {
   const isConnected = localStorage.getItem('walletConnected') === 'true'
   const connectedAddress = localStorage.getItem('walletAddress') || ''
 
-  // Register user in backend immediately when wallet connects
-  const registerUserInBackend = async (address, walletType) => {
+  // Register user in Firebase when wallet connects
+  const registerUserInFirebase = async (address, walletType) => {
     try {
-      console.log('Registering user in backend:', address, walletType)
-      
+      logger.log('[Firebase] Starting user registration:', address, walletType)
+
+      // Check if user already exists
+      try {
+        const existingUser = await getUserById(address)
+        if (existingUser) {
+          logger.log('[Firebase] User already exists, updating login time')
+          // Update last login
+          await createUser({
+            ...existingUser,
+            lastLogin: new Date(),
+            walletType: walletType
+          })
+          return existingUser
+        }
+      } catch (checkError) {
+        logger.log('[Firebase] User does not exist, creating new user')
+      }
+
       // Get existing profile data if any
       const existingProfile = localStorage.getItem('userProfile')
       const profileData = existingProfile ? JSON.parse(existingProfile) : {}
-      
-      // Create/update user in backend with wallet type
-      const user = await userAPI.loginByWallet(
-        address, 
-        profileData.username || `User_${address.substring(2, 8)}`,
-        profileData.email || '',
-        walletType
-      )
-      
-      // Store user data from backend
-      if (user) {
-        console.log('User registered successfully:', user)
-        localStorage.setItem('backendUserId', user._id)
-        localStorage.setItem('backendUser', JSON.stringify(user))
-        
-        // Sync userId
-        if (user.userId) {
-          localStorage.setItem('realAccountId', user.userId)
-          // Update local profile with backend userId
-          const updatedProfile = { ...profileData, userId: user.userId, wallet: address, walletType }
-          localStorage.setItem('userProfile', JSON.stringify(updatedProfile))
-        }
+
+      // Generate unique user ID
+      const userId = profileData.userId || `USR${Date.now()}`
+      const username = profileData.username || `User_${address.substring(2, 8)}`
+
+      // Create user data for Firebase
+      const userData = {
+        wallet: address,
+        walletType: walletType,
+        username: username,
+        email: profileData.email || '',
+        balance: profileData.balance || 0,
+        points: profileData.points || 0,
+        vipLevel: profileData.vipLevel || 0,
+        userId: userId,
+        createdAt: new Date(),
+        lastLogin: new Date(),
+        status: 'active',
+        tradeMode: 'auto', // Default trade mode
+        isFrozen: false
       }
-      return user
+
+      // Save to Firebase Firestore
+      logger.log('[Firebase] Saving user data to Firestore...')
+      await createUser(userData)
+      logger.log('[Firebase] ✅ User saved successfully to Firestore!')
+
+      // Store user data locally
+      localStorage.setItem('backendUserId', address)
+      localStorage.setItem('backendUser', JSON.stringify(userData))
+      localStorage.setItem('realAccountId', userId)
+      localStorage.setItem('userProfile', JSON.stringify(userData))
+
+      logger.log('[Firebase] ✅ User registered and saved:', {
+        wallet: address,
+        userId: userId,
+        username: username
+      })
+
+      return userData
     } catch (error) {
-      console.error('Failed to register user in backend:', error)
-      // Don't block user - still allow local usage
+      logger.error('[Firebase] ❌ Failed to register user:', error)
+      logger.error('[Firebase] Error details:', error.message)
+      // Still allow local usage
       return null
     }
   }
 
-  // On app load, ensure connected wallet is registered in backend
+  // On app load, ensure connected wallet is registered in Firebase
   useEffect(() => {
     if (isConnected && connectedAddress) {
-      // Re-register to ensure backend has latest data
+      // Re-register to ensure Firebase has latest data
       const walletType = localStorage.getItem('walletType') || 'unknown'
-      registerUserInBackend(connectedAddress, walletType)
+      registerUserInFirebase(connectedAddress, walletType)
     }
   }, [isConnected, connectedAddress])
 
@@ -81,7 +116,7 @@ export default function WalletGate({ onConnect, children }) {
 
     try {
       let address = ''
-      
+
       // Check if MetaMask or other Web3 provider exists
       if (walletId === 'metamask' && typeof window.ethereum !== 'undefined') {
         // Real MetaMask connection
@@ -92,27 +127,34 @@ export default function WalletGate({ onConnect, children }) {
       } else {
         // For other wallets or if no Web3 provider, simulate connection
         await new Promise(resolve => setTimeout(resolve, 2000))
-        
-        // Generate a simulated address
-        address = '0x' + Array.from({length: 40}, () => 
-          Math.floor(Math.random() * 16).toString(16)
-        ).join('')
+
+        // Generate a simulated address using cryptographically secure randomness
+        const cryptoObj = (typeof window !== 'undefined' && window.crypto) ? window.crypto : crypto
+        const randomBytes = new Uint8Array(20) // 20 bytes = 40 hex characters
+        cryptoObj.getRandomValues(randomBytes)
+        const hex = Array.from(randomBytes, b => b.toString(16).padStart(2, '0')).join('')
+        address = '0x' + hex
       }
-      
+
       if (address) {
         localStorage.setItem('walletConnected', 'true')
         localStorage.setItem('walletAddress', address)
         localStorage.setItem('walletType', walletId)
-        
-        // Register user in backend database immediately
-        const user = await registerUserInBackend(address, walletId)
-        console.log('Wallet connected and user registered:', user ? user.userId : 'failed')
-        
-        if (onConnect) onConnect(address)
-        window.location.reload()
-      }
 
+        // Register user in Firebase immediately
+        const user = await registerUserInFirebase(address, walletId)
+        logger.log('[Firebase] Wallet connected and user registered:', user ? user.userId : 'failed')
+
+        // Notify parent component
+        if (onConnect) {
+          onConnect(address)
+        }
+
+        // Success - component will re-render and show children
+        setIsConnecting(false)
+      }
     } catch (err) {
+      logger.error('[Wallet] Connection error:', err)
       setError('Connection failed. Please try again or use a different wallet.')
       setIsConnecting(false)
       setSelectedWallet(null)
@@ -224,7 +266,7 @@ export default function WalletGate({ onConnect, children }) {
         .wallet-gate-overlay {
           position: absolute;
           inset: 0;
-          background: 
+          background:
             radial-gradient(ellipse at 20% 20%, rgba(0, 255, 136, 0.08) 0%, transparent 50%),
             radial-gradient(ellipse at 80% 80%, rgba(136, 0, 255, 0.08) 0%, transparent 50%),
             radial-gradient(ellipse at 50% 50%, rgba(0, 136, 255, 0.05) 0%, transparent 70%);
@@ -298,7 +340,7 @@ export default function WalletGate({ onConnect, children }) {
           border-radius: 24px;
           padding: 30px;
           backdrop-filter: blur(20px);
-          box-shadow: 
+          box-shadow:
             0 25px 50px rgba(0, 0, 0, 0.5),
             inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }

@@ -1,486 +1,416 @@
-// Firebase Configuration and Initialization
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, updateDoc, deleteDoc, addDoc, onSnapshot, orderBy, limit, serverTimestamp } from 'firebase/firestore';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, collection, doc, setDoc, getDoc, addDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
-// Firebase configuration from environment variables
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-// Initialize Firebase
-let app;
-let db;
-let auth;
+let app, db, auth;
 let isFirebaseAvailable = false;
 
 try {
-  // Only initialize if we have required config
   if (firebaseConfig.apiKey && firebaseConfig.projectId) {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
     isFirebaseAvailable = true;
-    console.log('Firebase initialized successfully');
-  } else {
-    console.warn('Firebase config incomplete. Some features may use fallback storage.');
   }
 } catch (error) {
-  console.error('Firebase initialization error:', error);
-  isFirebaseAvailable = false;
+  console.error("Firebase initialization error:", error);
 }
 
-// ==========================================
-// AUTHENTICATION FUNCTIONS
-// ==========================================
-
-export const firebaseSignIn = async (email, password) => {
-  if (!isFirebaseAvailable) throw new Error('Firebase not available');
-  return signInWithEmailAndPassword(auth, email, password);
-};
-
-export const firebaseSignUp = async (email, password) => {
-  if (!isFirebaseAvailable) throw new Error('Firebase not available');
-  return createUserWithEmailAndPassword(auth, email, password);
-};
-
-export const firebaseSignOut = async () => {
-  if (!isFirebaseAvailable) throw new Error('Firebase not available');
-  return signOut(auth);
-};
-
-export const onAuthChange = (callback) => {
-  if (!isFirebaseAvailable) return () => {};
-  return onAuthStateChanged(auth, callback);
-};
-
-// ==========================================
-// CHAT MESSAGES FUNCTIONS
-// ==========================================
-
-export const saveChatMessage = async (message) => {
-  if (!isFirebaseAvailable) {
-    // Fallback to localStorage
-    const logs = JSON.parse(localStorage.getItem('customerChatLogs') || '[]');
-    const newMsg = { 
-      ...message, 
-      id: Date.now().toString(), 
-      createdAt: new Date().toISOString() 
-    };
-    logs.push(newMsg);
-    localStorage.setItem('customerChatLogs', JSON.stringify(logs));
-    window.dispatchEvent(new Event('storage'));
-    return newMsg.id;
-  }
-
-  try {
-    const docRef = await addDoc(collection(db, 'chatMessages'), {
-      sessionId: message.sessionId,
-      message: message.message || message.text,
-      senderName: message.username || message.senderName || 'User',
-      senderWallet: message.wallet || message.senderWallet,
-      sender: message.sender || 'user',
-      createdAt: serverTimestamp(),
-      delivered: false
-    });
-    return docRef.id;
-  } catch (error) {
-    console.error('Save message error:', error);
-    throw error;
-  }
-};
-
-export const subscribeToChatMessages = (callback) => {
-  if (!isFirebaseAvailable) {
-    // Fallback to localStorage
-    const logs = JSON.parse(localStorage.getItem('customerChatLogs') || '[]');
-    callback(logs);
-    return () => {};
-  }
-
-  const q = query(
-    collection(db, 'chatMessages'),
-    orderBy('createdAt', 'desc'),
-    limit(100)
-  );
-
-  return onSnapshot(q, (snapshot) => {
-    const messages = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toMillis() || Date.now(),
-      timestamp: doc.data().createdAt?.toMillis() || Date.now()
-    }));
-    callback(messages);
-  }, (error) => {
-    console.error('Subscribe to messages error:', error);
-    const logs = JSON.parse(localStorage.getItem('customerChatLogs') || '[]');
-    callback(logs);
-  });
-};
-
-// ==========================================
-// ACTIVE CHATS FUNCTIONS
-// ==========================================
-
-export const saveActiveChat = async (chat) => {
-  if (!isFirebaseAvailable) {
-    // Fallback to localStorage
-    const chats = JSON.parse(localStorage.getItem('activeChats') || '[]');
-    const existingIndex = chats.findIndex(c => c.sessionId === chat.sessionId);
-    if (existingIndex >= 0) {
-      chats[existingIndex] = { ...chats[existingIndex], ...chat };
-    } else {
-      chats.push(chat);
-    }
-    localStorage.setItem('activeChats', JSON.stringify(chats));
-    window.dispatchEvent(new Event('storage'));
-    return chat.sessionId;
-  }
-
-  try {
-    const chatRef = doc(db, 'activeChats', chat.sessionId);
-    await setDoc(chatRef, {
-      ...chat,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-    return chat.sessionId;
-  } catch (error) {
-    console.error('Save active chat error:', error);
-    throw error;
-  }
-};
-
-export const updateActiveChat = async (sessionId, updates) => {
-  if (!isFirebaseAvailable) {
-    // Fallback to localStorage
-    const chats = JSON.parse(localStorage.getItem('activeChats') || '[]');
-    const chat = chats.find(c => c.sessionId === sessionId);
-    if (chat) {
-      Object.assign(chat, updates);
-      localStorage.setItem('activeChats', JSON.stringify(chats));
-      window.dispatchEvent(new Event('storage'));
-    }
-    return;
-  }
-
-  try {
-    const chatRef = doc(db, 'activeChats', sessionId);
-    await updateDoc(chatRef, {
-      ...updates,
-      updatedAt: serverTimestamp()
-    });
-  } catch (error) {
-    console.error('Update active chat error:', error);
-    throw error;
-  }
-};
-
-export const subscribeToActiveChats = (callback) => {
-  if (!isFirebaseAvailable) {
-    // Fallback to localStorage
-    const chats = JSON.parse(localStorage.getItem('activeChats') || '[]');
-    callback(chats);
-    return () => {};
-  }
-
-  const q = query(collection(db, 'activeChats'), orderBy('updatedAt', 'desc'));
-
-  return onSnapshot(q, (snapshot) => {
-    const chats = snapshot.docs.map(doc => ({
-      sessionId: doc.id,
-      ...doc.data()
-    }));
-    callback(chats);
-  }, (error) => {
-    console.error('Subscribe to active chats error:', error);
-    const chats = JSON.parse(localStorage.getItem('activeChats') || '[]');
-    callback(chats);
-  });
-};
-
-// ==========================================
-// ADMIN REPLIES FUNCTIONS
-// ==========================================
-
-export const saveAdminReply = async (reply) => {
-  if (!isFirebaseAvailable) {
-    // Fallback to localStorage
-    const replies = JSON.parse(localStorage.getItem('adminChatReplies') || '[]');
-    const newReply = { 
-      ...reply, 
-      id: Date.now().toString(), 
-      createdAt: new Date().toISOString() 
-    };
-    replies.push(newReply);
-    localStorage.setItem('adminChatReplies', JSON.stringify(replies));
-    window.dispatchEvent(new Event('storage'));
-    return newReply.id;
-  }
-
-  try {
-    const docRef = await addDoc(collection(db, 'chatMessages'), {
-      sessionId: reply.sessionId,
-      message: reply.message || reply.text,
-      sender: 'admin',
-      adminName: reply.adminName,
-      adminId: reply.adminId,
-      createdAt: serverTimestamp(),
-      delivered: false
-    });
-    return docRef.id;
-  } catch (error) {
-    console.error('Save admin reply error:', error);
-    throw error;
-  }
-};
-
-export const subscribeToAdminReplies = (sessionId, callback) => {
-  if (!isFirebaseAvailable) {
-    // Fallback to localStorage
-    const replies = JSON.parse(localStorage.getItem('adminChatReplies') || '[]');
-    const sessionReplies = replies.filter(r => r.sessionId === sessionId);
-    callback(sessionReplies);
-    return () => {};
-  }
-
-  const q = query(
-    collection(db, 'chatMessages'),
-    where('sessionId', '==', sessionId),
-    where('sender', '==', 'admin'),
-    orderBy('createdAt', 'asc')
-  );
-
-  return onSnapshot(q, (snapshot) => {
-    const replies = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toMillis() || Date.now()
-    }));
-    callback(replies);
-  }, (error) => {
-    console.error('Subscribe to admin replies error:', error);
-    const replies = JSON.parse(localStorage.getItem('adminChatReplies') || '[]');
-    callback(replies.filter(r => r.sessionId === sessionId));
-  });
-};
-
-export const markReplyDelivered = async (replyId) => {
-  if (!isFirebaseAvailable) {
-    const replies = JSON.parse(localStorage.getItem('adminChatReplies') || '[]');
-    const reply = replies.find(r => r.id === replyId);
-    if (reply) {
-      reply.delivered = true;
-      localStorage.setItem('adminChatReplies', JSON.stringify(replies));
-    }
-    return;
-  }
-
-  try {
-    const replyRef = doc(db, 'chatMessages', replyId);
-    await updateDoc(replyRef, { delivered: true });
-  } catch (error) {
-    console.error('Mark reply delivered error:', error);
-  }
-};
-
-export const subscribeToAllAdminReplies = (callback) => {
-  if (!isFirebaseAvailable) {
-    const replies = JSON.parse(localStorage.getItem('adminChatReplies') || '[]');
-    callback(replies);
-    return () => {};
-  }
-
-  const q = query(
-    collection(db, 'chatMessages'),
-    where('sender', '==', 'admin'),
-    orderBy('createdAt', 'desc')
-  );
-
-  return onSnapshot(q, (snapshot) => {
-    const replies = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toMillis() || Date.now()
-    }));
-    callback(replies);
-  }, (error) => {
-    console.error('Subscribe to all admin replies error:', error);
-    const replies = JSON.parse(localStorage.getItem('adminChatReplies') || '[]');
-    callback(replies);
-  });
-};
-
-// ==========================================
-// USER DATA FUNCTIONS
-// ==========================================
-
-export const saveUser = async (userData) => {
-  if (!isFirebaseAvailable) throw new Error('Firebase not available');
-  
-  try {
-    const userRef = doc(db, 'users', userData.wallet || userData.id);
-    await setDoc(userRef, {
-      ...userData,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-    return userData.wallet || userData.id;
-  } catch (error) {
-    console.error('Save user error:', error);
-    throw error;
-  }
-};
-
-export const getUser = async (walletOrId) => {
-  if (!isFirebaseAvailable) throw new Error('Firebase not available');
-  
-  try {
-    const userRef = doc(db, 'users', walletOrId);
-    const userSnap = await getDoc(userRef);
-    return userSnap.exists() ? { id: userSnap.id, ...userSnap.data() } : null;
-  } catch (error) {
-    console.error('Get user error:', error);
-    throw error;
-  }
-};
-
-// ==========================================
-// USER DATA FUNCTIONS (For Admin Dashboards)
-// ==========================================
-
-// Helper function to convert Firestore timestamp to milliseconds
-const convertTimestamp = (timestamp) => {
-  return timestamp?.toMillis?.() || timestamp || Date.now();
-};
-
-// Helper function to get localStorage fallback data
 const getLocalStorageFallback = (key, defaultValue = []) => {
   try {
-    return JSON.parse(localStorage.getItem(key) || JSON.stringify(defaultValue));
-  } catch (e) {
-    console.error(`Failed to parse localStorage key "${key}":`, e);
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : defaultValue;
+  } catch {
     return defaultValue;
   }
 };
 
-export const subscribeToUsers = (callback) => {
+const convertTimestamp = (ts) => ts?.toMillis?.() || ts;
+
+export const subscribeToTradeUpdates = (tradeId, callback) => {
+    const fallback = () => {
+        const activeTrades = getLocalStorageFallback('activeTrades', []);
+        const myTrade = activeTrades.find(t => t.id === tradeId);
+        if (myTrade) {
+            callback(myTrade);
+        }
+    };
+
+    if (!isFirebaseAvailable) {
+        const interval = setInterval(fallback, 1000);
+        return () => clearInterval(interval);
+    }
+
+    const tradeRef = doc(db, 'activeTrades', tradeId);
+    return onSnapshot(tradeRef, (doc) => {
+        if (doc.exists()) {
+            callback({ id: doc.id, ...doc.data() });
+        }
+    }, (error) => {
+        console.error("Trade update subscription error:", error);
+        fallback(); // Fallback to localStorage on error
+    });
+};
+
+export const saveUser = async (userId, data) => {
+  if (isFirebaseAvailable) {
+    await setDoc(doc(db, 'users', userId), data, { merge: true });
+  } else {
+    const users = getLocalStorageFallback('users', {});
+    users[userId] = { ...(users[userId] || {}), ...data };
+    localStorage.setItem('users', JSON.stringify(users));
+  }
+};
+
+export const getUser = async (userId) => {
   if (!isFirebaseAvailable) {
-    console.warn('Firebase not available, using localStorage fallback');
-    callback(getLocalStorageFallback('registeredUsers'));
+    const users = getLocalStorageFallback('users', {});
+    return users[userId] || null;
+  }
+  const userDoc = await getDoc(doc(db, 'users', userId));
+  return userDoc.exists() ? { id: userDoc.id, ...userDoc.data() } : null;
+};
+
+export const saveAiArbitrageInvestment = async (investment) => {
+  const investmentsKey = 'aiArbitrageInvestments';
+  if (!isFirebaseAvailable) {
+    let investments = getLocalStorageFallback(investmentsKey, []);
+    if (investment.id) {
+      const index = investments.findIndex(inv => inv.id === investment.id);
+      if (index > -1) investments[index] = { ...investments[index], ...investment };
+      else investments.push(investment);
+    } else {
+      investments.push({ ...investment, id: Date.now().toString() });
+    }
+    localStorage.setItem(investmentsKey, JSON.stringify(investments));
+    return;
+  }
+  try {
+    if (investment.id) {
+      await setDoc(doc(db, 'aiArbitrageInvestments', investment.id), investment, { merge: true });
+    } else {
+      await addDoc(collection(db, 'aiArbitrageInvestments'), investment);
+    }
+  } catch (error) {
+    console.error("Error saving AI Arbitrage investment:", error);
+  }
+};
+
+export const subscribeToAiArbitrageInvestments = (callback) => {
+  const investmentsKey = 'aiArbitrageInvestments';
+  const userId = localStorage.getItem('wallet_address');
+  const fallback = () => {
+    const investments = getLocalStorageFallback(investmentsKey, []);
+    const userInvestments = investments.filter(inv => inv.userId === userId && !inv.completed);
+    callback(userInvestments);
+  };
+
+  if (!isFirebaseAvailable || !userId) {
+    fallback();
     return () => {};
   }
 
   const q = query(
-    collection(db, 'users'),
-    orderBy('createdAt', 'desc')
+    collection(db, 'aiArbitrageInvestments'),
+    where('userId', '==', userId),
+    where('completed', '==', false)
   );
 
   return onSnapshot(q, (snapshot) => {
-    const users = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: convertTimestamp(doc.data().createdAt)
+    const investments = snapshot.docs.map(d => ({
+      id: d.id,
+      ...d.data(),
+      startTime: convertTimestamp(d.data().startTime),
+      endTime: convertTimestamp(d.data().endTime),
     }));
-    callback(users);
+    callback(investments);
   }, (error) => {
-    console.error('Subscribe to users error:', error);
-    callback(getLocalStorageFallback('registeredUsers'));
+    console.error("AI Arbitrage subscription error:", error);
+    fallback();
   });
+};
+
+export const subscribeToBinaryTrades = (userId, callback) => {
+  const key = `binaryTrades_${userId}`;
+  const fallback = () => callback(getLocalStorageFallback(key, []));
+  if (!isFirebaseAvailable) return fallback(), () => {};
+
+  const q = query(collection(db, 'users', userId, 'binaryTrades'), where('status', '==', 'active'));
+  return onSnapshot(q, snapshot => {
+    const trades = snapshot.docs.map(d => ({ id: d.id, ...d.data(), expiryTime: convertTimestamp(d.data().expiryTime) }));
+    callback(trades);
+  }, fallback);
+};
+
+export const saveBinaryTrade = async (userId, trade) => {
+  if (!isFirebaseAvailable) {
+    const key = `binaryTrades_${userId}`;
+    const trades = getLocalStorageFallback(key);
+    trades.push(trade);
+    localStorage.setItem(key, JSON.stringify(trades));
+  } else {
+    await setDoc(doc(db, 'users', userId, 'binaryTrades', trade.id), trade);
+  }
+};
+
+export const closeBinaryTrade = async (userId, trade, result, payout) => {
+    const user = await getUser(userId);
+    const newBalance = (user?.balance || 0) + payout;
+    
+    if (!isFirebaseAvailable) {
+        const tradesKey = `binaryTrades_${userId}`;
+        let trades = getLocalStorageFallback(tradesKey).filter(t => t.id !== trade.id);
+        localStorage.setItem(tradesKey, JSON.stringify(trades));
+        
+        const historyKey = `binaryHistory_${userId}`;
+        let history = getLocalStorageFallback(historyKey);
+        history.unshift({ ...trade, result, payout, status: 'closed' });
+        localStorage.setItem(historyKey, JSON.stringify(history));
+        
+        await saveUser(userId, { balance: newBalance });
+    } else {
+        const batch = writeBatch(db);
+        const tradeRef = doc(db, 'users', userId, 'binaryTrades', trade.id);
+        batch.update(tradeRef, { result, payout, status: 'closed' });
+        batch.update(doc(db, 'users', userId), { balance: newBalance });
+        await batch.commit();
+    }
+};
+
+export const subscribeToBinaryHistory = (userId, callback) => {
+    const key = `binaryHistory_${userId}`;
+    const fallback = () => callback(getLocalStorageFallback(key, []));
+    if (!isFirebaseAvailable) return fallback(), () => {};
+
+    const q = query(collection(db, 'users', userId, 'binaryTrades'), where('status', '==', 'closed'), orderBy('expiryTime', 'desc'), limit(20));
+    return onSnapshot(q, snapshot => {
+        const history = snapshot.docs.map(d => ({ id: d.id, ...d.data(), expiryTime: convertTimestamp(d.data().expiryTime) }));
+        callback(history);
+    }, fallback);
+};
+
+export const subscribeToFuturesPositions = (userId, callback) => {
+  const key = `futuresPositions_${userId}`;
+  const fallback = () => callback(getLocalStorageFallback(key, []));
+  if (!isFirebaseAvailable || !userId) return fallback(), () => {};
+
+  const q = query(collection(db, 'users', userId, 'futuresPositions'), where('status', '==', 'open'));
+  return onSnapshot(q, snapshot => {
+    const positions = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    callback(positions);
+  }, fallback);
+};
+
+export const saveFuturesPosition = async (userId, position) => {
+  if (!isFirebaseAvailable) {
+    const key = `futuresPositions_${userId}`;
+    const positions = getLocalStorageFallback(key);
+    positions.push(position);
+    localStorage.setItem(key, JSON.stringify(positions));
+  } else {
+    await setDoc(doc(db, 'users', userId, 'futuresPositions', position.id), position);
+  }
+};
+
+export const closeFuturesPosition = async (userId, position, pnl) => {
+  const user = await getUser(userId);
+  const newBalance = (user?.balance || 0) + position.margin + pnl;
+
+  if (!isFirebaseAvailable) {
+    const positionsKey = `futuresPositions_${userId}`;
+    let positions = getLocalStorageFallback(positionsKey).filter(p => p.id !== position.id);
+    localStorage.setItem(positionsKey, JSON.stringify(positions));
+    
+    const historyKey = `futuresHistory_${userId}`;
+    let history = getLocalStorageFallback(historyKey);
+    history.unshift({ ...position, pnl, status: 'closed', closeTime: Date.now() });
+    localStorage.setItem(historyKey, JSON.stringify(history));
+
+    await saveUser(userId, { balance: newBalance });
+  } else {
+    const batch = writeBatch(db);
+    const posRef = doc(db, 'users', userId, 'futuresPositions', position.id);
+    batch.update(posRef, { pnl, status: 'closed', closeTime: serverTimestamp() });
+    
+    const userRef = doc(db, 'users', userId);
+    batch.update(userRef, { balance: newBalance });
+
+    await batch.commit();
+  }
+};
+
+export const subscribeToFuturesHistory = (userId, callback) => {
+  const key = `futuresHistory_${userId}`;
+  const fallback = () => callback(getLocalStorageFallback(key, []));
+  if (!isFirebaseAvailable || !userId) return fallback(), () => {};
+
+  const q = query(collection(db, 'users', userId, 'futuresPositions'), where('status', '==', 'closed'), orderBy('closeTime', 'desc'), limit(50));
+  return onSnapshot(q, snapshot => {
+    const history = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    callback(history);
+  }, fallback);
+};
+
+export const saveTradeHistory = async (tradeRecord) => {
+  if (!isFirebaseAvailable) {
+    const key = `tradeHistory_${tradeRecord.userId}`;
+    const history = getLocalStorageFallback(key, []);
+    history.unshift(tradeRecord);
+    localStorage.setItem(key, JSON.stringify(history));
+  } else {
+    const tradeHistoryRef = doc(db, 'users', tradeRecord.userId, 'tradeHistory', tradeRecord.tradeId);
+    await setDoc(tradeHistoryRef, tradeRecord);
+  }
+};
+
+export const firebaseSignIn = async (email, password) => {
+  if (!isFirebaseAvailable) {
+    // This is a placeholder for local storage-based authentication
+    if (email === 'admin' && password === 'password') {
+      return { user: { email } };
+    }
+    throw new Error('Invalid credentials');
+  }
+  return await signInWithEmailAndPassword(auth, email, password);
+};
+
+export const firebaseSignOut = async () => {
+  if (!isFirebaseAvailable) {
+    return;
+  }
+  await signOut(auth);
+};
+
+export const subscribeToUsers = (callback) => {
+  const key = 'users';
+  const fallback = () => callback(Object.values(getLocalStorageFallback(key, {})));
+  if (!isFirebaseAvailable) return fallback(), () => {};
+
+  const q = query(collection(db, 'users'));
+  return onSnapshot(q, snapshot => {
+    const users = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    callback(users);
+  }, fallback);
 };
 
 export const subscribeToDeposits = (callback) => {
-  if (!isFirebaseAvailable) {
-    console.warn('Firebase not available, using localStorage fallback');
-    callback(getLocalStorageFallback('adminDeposits'));
-    return () => {};
-  }
+  const key = 'deposits';
+  const fallback = () => callback(getLocalStorageFallback(key, []));
+  if (!isFirebaseAvailable) return fallback(), () => {};
 
-  const q = query(
-    collection(db, 'deposits'),
-    orderBy('createdAt', 'desc')
-  );
-
-  return onSnapshot(q, (snapshot) => {
-    const deposits = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: convertTimestamp(doc.data().createdAt)
-    }));
+  const q = query(collection(db, 'deposits'), where('status', '==', 'pending'));
+  return onSnapshot(q, snapshot => {
+    const deposits = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     callback(deposits);
-  }, (error) => {
-    console.error('Subscribe to deposits error:', error);
-    callback(getLocalStorageFallback('adminDeposits'));
-  });
+  }, fallback);
 };
 
 export const subscribeToWithdrawals = (callback) => {
-  if (!isFirebaseAvailable) {
-    console.warn('Firebase not available, using localStorage fallback');
-    callback(getLocalStorageFallback('adminWithdrawals'));
-    return () => {};
-  }
+    const key = 'withdrawals';
+    const fallback = () => callback(getLocalStorageFallback(key, []));
+    if (!isFirebaseAvailable) return fallback(), () => {};
 
-  const q = query(
-    collection(db, 'withdrawals'),
-    orderBy('createdAt', 'desc')
-  );
-
-  return onSnapshot(q, (snapshot) => {
-    const withdrawals = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: convertTimestamp(doc.data().createdAt)
-    }));
-    callback(withdrawals);
-  }, (error) => {
-    console.error('Subscribe to withdrawals error:', error);
-    callback(getLocalStorageFallback('adminWithdrawals'));
-  });
+    const q = query(collection(db, 'withdrawals'), where('status', '==', 'pending'));
+    return onSnapshot(q, snapshot => {
+        const withdrawals = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        callback(withdrawals);
+    }, fallback);
 };
 
 export const subscribeToTrades = (callback) => {
-  if (!isFirebaseAvailable) {
-    console.warn('Firebase not available, using localStorage fallback');
-    callback(getLocalStorageFallback('tradeHistory'));
-    return () => {};
-  }
+    const key = 'trades';
+    const fallback = () => callback(getLocalStorageFallback(key, []));
+    if (!isFirebaseAvailable) return fallback(), () => {};
 
-  const q = query(
-    collection(db, 'trades'),
-    orderBy('timestamp', 'desc'),
-    limit(100)
-  );
-
-  return onSnapshot(q, (snapshot) => {
-    const trades = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      timestamp: convertTimestamp(doc.data().timestamp)
-    }));
-    callback(trades);
-  }, (error) => {
-    console.error('Subscribe to trades error:', error);
-    callback(getLocalStorageFallback('tradeHistory'));
-  });
+    const q = query(collection(db, 'trades'));
+    return onSnapshot(q, snapshot => {
+        const trades = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        callback(trades);
+    }, fallback);
 };
 
-// ==========================================
-// UTILITY FUNCTIONS
-// ==========================================
+export const subscribeToChatMessages = (chatId, callback) => {
+    const key = `chat_${chatId}`;
+    const fallback = () => callback(getLocalStorageFallback(key, []));
+    if (!isFirebaseAvailable) return fallback(), () => {};
+
+    const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp', 'asc'));
+    return onSnapshot(q, snapshot => {
+        const messages = snapshot.docs.map(d => ({ id: d.id, ...d.data(), timestamp: convertTimestamp(d.data().timestamp) }));
+        callback(messages);
+    }, fallback);
+};
+
+export const subscribeToActiveChats = (callback) => {
+    const key = 'activeChats';
+    const fallback = () => callback(getLocalStorageFallback(key, []));
+    if (!isFirebaseAvailable) return fallback(), () => {};
+
+    const q = query(collection(db, 'chats'), where('isArchived', '==', false));
+    return onSnapshot(q, snapshot => {
+        const chats = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        callback(chats);
+    }, fallback);
+};
+
+export const saveAdminReply = async (chatId, adminId, text) => {
+    const message = {
+        senderId: adminId,
+        text,
+        timestamp: serverTimestamp(),
+        isAdmin: true
+    };
+    if (!isFirebaseAvailable) {
+        const key = `chat_${chatId}`;
+        const messages = getLocalStorageFallback(key, []);
+        messages.push({ ...message, timestamp: Date.now() });
+        localStorage.setItem(key, JSON.stringify(messages));
+    } else {
+        await addDoc(collection(db, 'chats', chatId, 'messages'), message);
+        await setDoc(doc(db, 'chats', chatId), { lastMessage: text, lastUpdated: serverTimestamp() }, { merge: true });
+    }
+};
+
+export const updateActiveChat = async (chatId, data) => {
+    if (!isFirebaseAvailable) {
+        const chats = getLocalStorageFallback('activeChats', []);
+        const index = chats.findIndex(c => c.id === chatId);
+        if (index > -1) {
+            chats[index] = { ...chats[index], ...data };
+            localStorage.setItem('activeChats', JSON.stringify(chats));
+        }
+    } else {
+        await setDoc(doc(db, 'chats', chatId), data, { merge: true });
+    }
+};
+
+export const saveChatMessage = async (chatId, senderId, text) => {
+    const message = {
+        senderId,
+        text,
+        timestamp: serverTimestamp(),
+        isAdmin: false
+    };
+    if (!isFirebaseAvailable) {
+        const key = `chat_${chatId}`;
+        const messages = getLocalStorageFallback(key, []);
+        messages.push({ ...message, timestamp: Date.now() });
+        localStorage.setItem(key, JSON.stringify(messages));
+    } else {
+        await addDoc(collection(db, 'chats', chatId, 'messages'), message);
+        await setDoc(doc(db, 'chats', chatId), { lastMessage: text, lastUpdated: serverTimestamp() }, { merge: true });
+    }
+};
 
 export const isFirebaseEnabled = () => isFirebaseAvailable;
 
-export const cleanupChatPolling = () => {
-  // No polling needed with Firebase real-time listeners
-  console.log('Firebase uses real-time listeners, no polling to cleanup');
-};
-
-// Export Firebase instances for direct use if needed
-export { db, auth };
-export const database = db;
+export { isFirebaseAvailable, onAuthStateChanged, auth, db };

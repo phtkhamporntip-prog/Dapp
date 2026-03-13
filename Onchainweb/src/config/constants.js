@@ -1,3 +1,4 @@
+
 // Application Constants
 // Central location for all app-wide constants
 
@@ -26,6 +27,8 @@ export const APP_CONFIG = {
 export const API_CONFIG = {
   BASE_URL: '', // No legacy API - Firebase only
   TIMEOUT: 30000
+  // BACKEND_AUTH_URL removed - Firebase Auth is used for all authentication
+  // See FIREBASE_VS_BACKEND_JWT_CLARIFICATION.md for details
 };
 
 // WalletConnect Configuration
@@ -45,6 +48,27 @@ export const WALLET_CONFIG = {
     'imToken',
     'WalletConnect'
   ]
+};
+
+export const SUPPORTED_CHAINS = [
+    { id: 1, name: 'Ethereum' },
+    { id: 56, name: 'BNB Smart Chain' },
+    { id: 137, name: 'Polygon' },
+];
+
+export const WALLET_CONNECTORS = {
+    METAMASK: { name: 'MetaMask', icon: '/wallets/metamask.svg' },
+    TRUSTWALLET: { name: 'Trust Wallet', icon: '/wallets/trustwallet.svg' },
+    COINBASE: { name: 'Coinbase Wallet', icon: '/wallets/coinbase.svg' },
+};
+
+// Cloudflare TURN Server Configuration
+export const TURN_SERVER_CONFIG = {
+  SERVER_NAME: import.meta.env.VITE_CLOUDFLARE_TURN_SERVER_NAME || '',
+  TOKEN_ID: import.meta.env.VITE_CLOUDFLARE_TURN_TOKEN_ID || '',
+  API_TOKEN: import.meta.env.VITE_CLOUDFLARE_TURN_API_TOKEN || '',
+  API_ENDPOINT: 'https://rtc.live.cloudflare.com/v1/turn/keys',
+  TTL: 86400 // 24 hours
 };
 
 // Trading Configuration
@@ -112,6 +136,14 @@ export const TRADE_STATUS = {
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
   FAILED: 'failed'
+};
+
+// Storage Keys
+export const STORAGE_KEYS = {
+    WALLET_CONNECTED: 'wallet_connected',
+    WALLET_ADDRESS: 'wallet_address',
+    WALLET_CHAIN_ID: 'wallet_chainId',
+    WALLET_CONNECTOR_TYPE: 'wallet_connector_type',
 };
 
 // Admin guard configuration

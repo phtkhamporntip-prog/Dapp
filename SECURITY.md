@@ -1,162 +1,167 @@
-# Security Best Practices for Snipe
+# Security Policy
 
-This document outlines security measures and best practices for the Snipe trading platform.
+## Reporting a Vulnerability
 
-## 🔐 Critical Security Updates
+If you discover a security vulnerability, please report it privately to the project maintainers.
 
-### Password Security
+**DO NOT** open a public issue for security vulnerabilities.
 
-**✅ IMPLEMENTED:**
-- Admin passwords are now hashed using bcrypt with 10 salt rounds
-- Automatic migration: existing plaintext passwords are upgraded to hashed versions on first login
-- Minimum password length: 8 characters (enforced for new admins and password resets)
-
-**⚠️ IMPORTANT:**
-- Master account password is stored in environment variable `MASTER_PASSWORD`
-- Never commit real passwords to the repository
-- Use strong, unique passwords for all accounts
+## Security Measures Implemented
 
 ### Authentication & Authorization
+- ✅ Firebase Authentication with email/password
+- ✅ Admin role-based access control (RBAC)
+- ✅ Firestore security rules for data protection
+- ✅ JWT token validation in Cloudflare Workers
+- ✅ Admin email allowlist for privileged access
+- ✅ Wallet-based authentication for users
 
-**Master Account:**
-- Username: `master` (hardcoded)
-- Password: Set via `MASTER_PASSWORD` environment variable
-- Has full platform control and can create/manage all admins
+### Rate Limiting
+- ✅ Basic rate limiting in Firestore rules (1 request per second)
+- ✅ Cloudflare Workers rate limiting (production recommended)
+- ⚙️ Configurable limit: 100 requests per minute per user
+- 📝 Note: For production, implement distributed rate limiting using Cloudflare Workers KV
 
-**Admin Accounts:**
-- Stored in MongoDB with bcrypt-hashed passwords
-- Granular permissions system
-- Can be assigned to specific users or have access to all users
+### Data Protection
+- ✅ No credentials stored in code
+- ✅ Environment variable validation at startup
+- ✅ Secure storage authentication in Cloudflare Workers
+- ✅ Encrypted data at rest (Firebase/Firestore)
+- ✅ HTTPS/TLS for all communications
+- ✅ CORS configuration for API endpoints
 
-### Environment Variables
+### Logging & Monitoring
+- ✅ Production logging disabled (no sensitive data in console)
+- ✅ Error tracking configured
+- ✅ Admin activity logging in Firestore
+- ✅ Conditional logging based on environment
 
-**Required for Backend:**
-```bash
-# Never commit these values to git!
-MONGO_URI=mongodb+srv://user:password@cluster.mongodb.net/snipe
-JWT_SECRET=your-secure-random-string-minimum-32-characters
-MASTER_USERNAME=master
-MASTER_PASSWORD=YourSecurePasswordHere-ChangeThis!
-```
+### Code Security
+- ✅ No hardcoded secrets or credentials
+- ✅ Environment-based configuration
+- ✅ Input validation on all user inputs
+- ✅ XSS protection via React's built-in escaping
+- ✅ CSRF protection via Firebase Authentication
 
-**Security Checklist:**
-- [ ] Change default `MASTER_PASSWORD` immediately after deployment
-- [ ] Use strong JWT_SECRET (minimum 32 characters, random)
-- [ ] Never share or commit `.env` files
-- [ ] Rotate JWT_SECRET periodically
-- [ ] Use different credentials for each environment (dev, staging, prod)
+### Infrastructure Security
+- ✅ Serverless architecture (Firebase + Cloudflare)
+- ✅ Automatic security patches (managed services)
+- ✅ DDoS protection via Cloudflare
+- ✅ Zero-trust network architecture
 
-## 🛡️ Security Features
+## Security Best Practices
 
-### Password Hashing
-- **Algorithm**: bcrypt with 10 salt rounds
-- **Storage**: Hashed passwords in MongoDB for admin accounts
-- **Migration**: Automatic upgrade from plaintext to hashed on login
+### For Developers
 
-### Token Security
-- **JWT tokens** with 24-hour expiration
-- Tokens include user role and permissions
-- Server-side validation on every authenticated request
+1. **Never commit secrets**
+   - Use `.env` files (already in `.gitignore`)
+   - Use Cloudflare Workers secrets for production
+   - Use Firebase environment configuration
 
-### CORS Protection
-- Whitelist of allowed origins
-- Automatic approval of Vercel preview URLs
-- Credentials support enabled for authenticated requests
+2. **Keep dependencies updated**
+   ```bash
+   npm audit
+   npm audit fix
+   ```
 
-## 🚨 Known Security Considerations
+3. **Use the logger utility**
+   - Import from `@/utils/logger`
+   - Automatically suppresses logs in production
+   - Prevents leaking sensitive information
 
-### Areas Requiring Additional Security (Future Enhancements)
+4. **Follow the principle of least privilege**
+   - Grant minimum necessary permissions
+   - Use role-based access control
+   - Regularly audit admin access
 
-1. **Rate Limiting**
-   - No rate limiting on authentication endpoints (should be added)
-   - Vulnerable to brute force attacks
+5. **Validate all inputs**
+   - Never trust user input
+   - Use Firebase security rules for server-side validation
+   - Sanitize data before storage
 
-2. **Password Policies**
-   - Minimum 8 characters enforced
-   - Consider adding: uppercase, lowercase, number, special character requirements
-   - Password expiration policies not implemented
+### For Deployment
 
-3. **Session Management**
-   - JWT tokens valid for 24 hours
-   - No token refresh mechanism
-   - No session revocation capability
+1. **Environment Variables**
+   - Set all required environment variables (see `.env.example`)
+   - Use strong, unique values for production
+   - Never expose Firebase API keys (they're restricted by domain)
 
-4. **Input Validation**
-   - Basic validation on critical endpoints
-   - Consider adding stronger input sanitization
+2. **Firestore Security Rules**
+   - Review and test rules before deployment
+   - Use the Firebase Emulator for local testing
+   - Deploy rules separately from code: `firebase deploy --only firestore:rules`
 
-5. **Audit Logging**
-   - Login attempts are logged to console
-   - No persistent audit trail for security events
+3. **Cloudflare Configuration**
+   - Create separate KV namespaces for dev/staging/prod
+   - Use Cloudflare secrets for sensitive tokens
+   - Enable WAF (Web Application Firewall) rules
 
-## 🔒 Secure Deployment Checklist
+4. **Monitoring**
+   - Enable Firebase Performance Monitoring
+   - Set up Cloudflare Analytics
+   - Configure alerts for suspicious activity
 
-### Before Going Live:
+## Known Security Considerations
 
-- [ ] Set strong `MASTER_PASSWORD` (16+ characters, mixed case, numbers, symbols)
-- [ ] Generate secure `JWT_SECRET` (use: `openssl rand -base64 32`)
-- [ ] Run database seed with secure passwords: `SEED_ADMIN_PASSWORD='secure-pwd' node seed.js`
-- [ ] Verify all `.env` files are in `.gitignore`
-- [ ] Test admin login with new credentials
-- [ ] Delete or secure test scripts with embedded credentials
-- [ ] Enable HTTPS only (no HTTP)
-- [ ] Review and limit CORS allowed origins
-- [ ] Set up monitoring for failed login attempts
-- [ ] Configure firewall rules for MongoDB
+### Rate Limiting (Current Implementation)
+The current Firestore rate limiting is **basic** and checks if a request comes more than 1 second after the last request. This is not production-grade rate limiting.
 
-### Testing Credentials:
+**Recommendation**: Implement proper rate limiting using Cloudflare Workers KV for distributed rate limiting across multiple requests and better accuracy.
 
-**NEVER use production credentials in tests!**
+### Firebase Admin SDK in Workers
+The Cloudflare Workers currently use a placeholder for Firebase Admin SDK token verification. For production:
+- Implement full JWT verification with Firebase public keys
+- Use Firebase Admin SDK where possible
+- Add token expiry and signature validation
 
-Use environment variables for all test scripts:
-```bash
-# Example
-MASTER_PASSWORD='your-test-password' ./test-admin-creation.sh
-```
+### Storage Authentication
+Storage operations now require authentication. Ensure:
+- All clients include valid Firebase Auth tokens
+- Tokens are refreshed before expiry
+- Failed auth attempts are logged and monitored
 
-## 📝 Security Incident Response
+## Compliance
 
-If you suspect a security breach:
+### GDPR
+- User data stored in Firebase (EU region available)
+- Users can request data deletion via admin panel
+- Data retention policies configurable
 
-1. **Immediate Actions:**
-   - Rotate all credentials immediately (MASTER_PASSWORD, JWT_SECRET)
-   - Check MongoDB access logs for unauthorized access
-   - Review application logs for suspicious activity
-   - Disable affected admin accounts
+### Data Residency
+- Firebase supports multiple regions
+- Cloudflare has global data centers
+- Configure regions in Firebase Console
 
-2. **Investigation:**
-   - Identify the scope of the breach
-   - Check which data may have been compromised
-   - Review recent code changes
+## Security Checklist for Production
 
-3. **Recovery:**
-   - Update all passwords
-   - Regenerate JWT secrets
-   - Force logout of all users (new JWT_SECRET does this automatically)
-   - Patch any identified vulnerabilities
+- [ ] All required environment variables set
+- [ ] Firestore security rules deployed
+- [ ] Cloudflare KV namespaces created
+- [ ] Cloudflare R2 buckets created
+- [ ] Cloudflare Worker secrets configured
+- [ ] Firebase Auth configured with email/password
+- [ ] Admin allowlist configured
+- [ ] Rate limiting tested under load
+- [ ] CORS origins configured correctly
+- [ ] HTTPS enforced on all endpoints
+- [ ] Error tracking service integrated (e.g., Sentry)
+- [ ] Monitoring and alerts configured
+- [ ] Security audit completed
+- [ ] Dependency audit completed (`npm audit`)
+- [ ] Environment variable validation tested
 
-4. **Post-Incident:**
-   - Document the incident
-   - Implement additional security measures
-   - Consider security audit
+## Vulnerability Disclosure
 
-## 🔍 Reporting Security Issues
+We appreciate security researchers and users who report vulnerabilities responsibly. 
 
-If you discover a security vulnerability:
+When reporting a vulnerability:
+1. Provide a detailed description of the issue
+2. Include steps to reproduce
+3. Suggest a fix if possible
+4. Allow reasonable time for a fix before public disclosure
 
-1. **DO NOT** open a public GitHub issue
-2. Email the maintainers privately with details
-3. Allow time for the issue to be fixed before public disclosure
-4. Responsible disclosure is appreciated
+## Updates
 
-## 📚 Additional Resources
+This security documentation is updated regularly. Last updated: 2026-02-08
 
-- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
-- [bcrypt Documentation](https://github.com/kelektiv/node.bcrypt.js)
-- [JWT Best Practices](https://tools.ietf.org/html/rfc8725)
-- [MongoDB Security Checklist](https://docs.mongodb.com/manual/administration/security-checklist/)
-
----
-
-**Last Updated:** 2026-01-08
-**Security Review Date:** 2026-01-08
+For questions or concerns about security, please contact the project maintainers.

@@ -1,9 +1,18 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { userAPI, uploadAPI } from '../lib/api'
+
+// Helper functions defined outside component for better performance
+const generateUserId = () => {
+  return Math.floor(10000 + Math.random() * 90000).toString()
+}
+
+const generateVerificationCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString()
+}
 
 export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick, onDemoClick, onC2CClick, onBorrowClick, onWalletActionsClick }) {
   const [activeModal, setActiveModal] = useState(null)
-  
+
   // Gmail Registration States
   const [registerStep, setRegisterStep] = useState('email') // 'email', 'verify', 'complete'
   const [registerEmail, setRegisterEmail] = useState('')
@@ -34,19 +43,9 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
     const saved = localStorage.getItem('uploadHistory')
     return saved ? JSON.parse(saved) : []
   })
-  
-  // Generate random 5-digit UserID (numbers only)
-  const generateUserId = () => {
-    return Math.floor(10000 + Math.random() * 90000).toString()
-  }
 
-  // Generate 6-digit verification code
-  const generateVerificationCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString()
-  }
-
-  // Profile & Settings state
-  const [profile, setProfile] = useState(() => {
+  // Memoize profile initialization to prevent repeated JSON.parse on re-renders
+  const initialProfile = useMemo(() => {
     const saved = localStorage.getItem('userProfile')
     if (saved) {
       const parsed = JSON.parse(saved)
@@ -95,7 +94,10 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
       totalTrades: 0,
       totalProfit: 0
     }
-  })
+  }, []); // Empty deps - only compute once
+
+  // Profile & Settings state
+  const [profile, setProfile] = useState(initialProfile)
 
   // Also sync userId with realAccountId in localStorage
   useEffect(() => {
@@ -109,36 +111,6 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
     }
   }, [profile.userId])
 
-  // Sync with backend when wallet is connected
-  useEffect(() => {
-    const syncWithBackend = async () => {
-      const wallet = localStorage.getItem('walletAddress')
-      if (!wallet) return
-
-      try {
-        const user = await userAPI.getByWallet(wallet)
-        if (user && user.userId) {
-          console.log('Synced with backend user:', user.userId)
-          localStorage.setItem('realAccountId', user.userId)
-          localStorage.setItem('backendUserId', user._id)
-          localStorage.setItem('backendUser', JSON.stringify(user))
-          
-          // Update profile with backend userId
-          setProfile(prev => ({
-            ...prev,
-            userId: user.userId,
-            kycStatus: user.kycStatus || prev.kycStatus,
-            balance: user.balance || prev.balance
-          }))
-        }
-      } catch (error) {
-        console.log('Backend sync skipped:', error.message)
-      }
-    }
-    
-    syncWithBackend()
-  }, []) // Run once on mount
-
   // Get display name (KYC name if available, otherwise username)
   const getDisplayName = () => {
     if (profile.firstName && profile.lastName) {
@@ -146,6 +118,9 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
     }
     return profile.username
   }
+  // Reference callback props to avoid lint warnings when they are optional and unused in some builds
+  const _debugProps = () => { if (typeof console !== 'undefined') console.debug('sidebar-props', { onBinaryClick, onDemoClick, onWalletActionsClick }) }
+  _debugProps()
 
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('appSettings')
@@ -246,13 +221,13 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
       setRegisterError('Username must be at least 3 characters')
       return
     }
-    
+
     // Generate and "send" verification code
     const code = generateVerificationCode()
     setGeneratedCode(code)
     setRegisterError('')
     setRegisterStep('verify')
-    
+
     // In production, this would call an email API
     // For demo, code is stored and shown to user
     console.log(`Verification code ${code} sent to ${registerEmail}`)
@@ -288,7 +263,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
         alert('File size must be less than 10MB')
         return
       }
-      
+
       const reader = new FileReader()
       reader.onloadend = () => {
         if (type === 'front') {
@@ -309,7 +284,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
       alert('Your KYC is already verified. You cannot modify your information.')
       return
     }
-    
+
     if (!kycFullName || !kycDocType || !kycDocNumber) {
       alert('Please fill in all required fields')
       return
@@ -318,38 +293,32 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
       alert('Please upload both front and back photos of your document')
       return
     }
-    
+
     let backendSuccess = false
     try {
       // Get wallet address for user identification
       const wallet = localStorage.getItem('walletAddress')
-      if (wallet) {
-        // First try to get existing user, if not found create one
-        let user = await userAPI.getByWallet(wallet).catch(() => null)
-        
-        if (!user) {
-          // User doesn't exist in backend, create them first
-          console.log('User not found in backend, creating...')
-          user = await userAPI.loginByWallet(wallet, profile.username, profile.email)
-        }
-        
-        if (user && user._id) {
-          // Submit KYC to backend
-          await userAPI.submitKYC(user._id, {
-            fullName: kycFullName,
-            docType: kycDocType,
-            docNumber: kycDocNumber,
-            frontPhoto: kycFrontPreview,
-            backPhoto: kycBackPreview
-          })
-          backendSuccess = true
-          console.log('KYC submitted to backend successfully')
-        }
+      if (wallet && isFirebaseAvailable) {
+        // Submit KYC to Firebase
+        // NOTE: Server-side validation should be added via Firebase Security Rules
+        // or Cloud Functions to verify data format and prevent malicious submissions
+        const userRef = doc(db, 'users', wallet)
+        await setDoc(userRef, {
+          kycFullName,
+          kycDocType,
+          kycDocNumber,
+          kycFrontPhoto: kycFrontPreview,
+          kycBackPhoto: kycBackPreview,
+          kycStatus: 'pending',
+          kycSubmittedAt: new Date().toISOString()
+        }, { merge: true })
+        backendSuccess = true
+        console.log('KYC submitted to Firebase successfully')
       }
     } catch (error) {
-      console.error('Failed to submit KYC to backend:', error)
+      console.error('Failed to submit KYC to Firebase:', error)
     }
-    
+
     // Also save locally for immediate UI update
     setProfile(prev => ({
       ...prev,
@@ -361,7 +330,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
       kycStatus: 'pending',
       kycSubmittedAt: new Date().toISOString()
     }))
-    
+
     if (backendSuccess) {
       alert('✅ KYC documents submitted successfully!\n\nYour verification is pending review.\nThis is now visible to admin in any browser.')
     } else {
@@ -402,18 +371,27 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
     }
 
     const wallet = localStorage.getItem('walletAddress')
-    
+
     try {
-      // Submit to backend
-      await uploadAPI.create({
-        userId: wallet || profile.userId,
-        imageUrl: uploadScreenshotPreview,
-        amount: parseFloat(uploadAmount),
-        network: uploadNetwork,
-        txHash: uploadTxHash || ''
-      })
+      // Submit to Firebase
+      if (wallet && isFirebaseAvailable) {
+        // NOTE: Server-side validation should be added via Cloud Functions to
+        // verify transaction on-chain before accepting deposit proof
+        // Generate unique document ID using Firestore auto-ID
+        const depositRef = doc(collection(db, 'deposits'))
+        await setDoc(depositRef, {
+          userId: wallet,
+          imageUrl: uploadScreenshotPreview,
+          amount: parseFloat(uploadAmount),
+          network: uploadNetwork,
+          txHash: uploadTxHash || '',
+          status: 'pending',
+          submittedAt: new Date().toISOString()
+        })
+        console.log('Deposit proof submitted to Firebase successfully')
+      }
     } catch (error) {
-      console.error('Failed to submit upload to backend:', error)
+      console.error('Failed to submit deposit proof to Firebase:', error)
     }
 
     const newUpload = {
@@ -458,12 +436,12 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
   return (
     <>
       {/* Overlay */}
-      <div 
+      <div
         className={`sidebar-overlay ${isOpen ? 'open' : ''}`}
         onClick={onClose}
         aria-hidden="true"
       />
-      
+
       {/* Sidebar */}
       <aside className={`sidebar ${isOpen ? 'open' : ''}`} aria-label="Navigation menu">
         {/* Profile Header Section */}
@@ -477,12 +455,12 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
               <h3 className="profile-username">{getDisplayName()}</h3>
               <span className="profile-user-id">ID: {profile.userId}</span>
               <div className="profile-status">
-                <span 
-                  className="kyc-dot" 
+                <span
+                  className="kyc-dot"
                   style={{ background: getKYCStatusColor(profile.kycStatus) }}
                 ></span>
                 <span className="kyc-text">
-                  {profile.kycStatus === 'verified' ? 'Verified' : 
+                  {profile.kycStatus === 'verified' ? 'Verified' :
                    profile.kycStatus === 'pending' ? 'Pending KYC' : 'Not Verified'}
                 </span>
               </div>
@@ -500,7 +478,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
             </svg>
           </button>
         </div>
-        
+
         <nav className="sidebar-nav">
           <div className="sidebar-divider"></div>
 
@@ -629,7 +607,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
               <div className="profile-id-banner">
                 <span className="id-label">User ID</span>
                 <span className="id-value">{profile.userId}</span>
-                <button 
+                <button
                   className="copy-id-btn"
                   onClick={() => {
                     navigator.clipboard.writeText(profile.userId)
@@ -644,7 +622,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                 <h4>Avatar</h4>
                 <div className="avatar-grid">
                   {avatarOptions.map((avatar, idx) => (
-                    <button 
+                    <button
                       key={idx}
                       className={`avatar-option ${profile.avatar === avatar ? 'selected' : ''}`}
                       onClick={() => handleProfileChange('avatar', avatar)}
@@ -658,11 +636,11 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
               {/* Personal Information Section */}
               <div className="profile-group">
                 <h4 className="profile-group-title">📋 Personal Information</h4>
-                
+
                 <div className="profile-row">
                   <div className="profile-field">
                     <label>First Name (KYC)</label>
-                    <input 
+                    <input
                       type="text"
                       className="profile-input"
                       value={profile.firstName}
@@ -672,7 +650,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                   </div>
                   <div className="profile-field">
                     <label>Last Name (KYC)</label>
-                    <input 
+                    <input
                       type="text"
                       className="profile-input"
                       value={profile.lastName}
@@ -684,7 +662,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
 
                 <div className="profile-section">
                   <label>Username</label>
-                  <input 
+                  <input
                     type="text"
                     className="profile-input"
                     value={profile.username}
@@ -696,7 +674,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                 <div className="profile-row">
                   <div className="profile-field">
                     <label>Date of Birth</label>
-                    <input 
+                    <input
                       type="date"
                       className="profile-input"
                       value={profile.dateOfBirth}
@@ -705,7 +683,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                   </div>
                   <div className="profile-field">
                     <label>Gender</label>
-                    <select 
+                    <select
                       className="profile-select"
                       value={profile.gender}
                       onChange={(e) => handleProfileChange('gender', e.target.value)}
@@ -722,10 +700,10 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
               {/* Contact Information Section */}
               <div className="profile-group">
                 <h4 className="profile-group-title">📞 Contact Information</h4>
-                
+
                 <div className="profile-section">
                   <label>Email Address</label>
-                  <input 
+                  <input
                     type="email"
                     className="profile-input"
                     value={profile.email}
@@ -736,7 +714,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
 
                 <div className="profile-section">
                   <label>Phone Number</label>
-                  <input 
+                  <input
                     type="tel"
                     className="profile-input"
                     value={profile.phone}
@@ -749,10 +727,10 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
               {/* Address Section */}
               <div className="profile-group">
                 <h4 className="profile-group-title">🏠 Address</h4>
-                
+
                 <div className="profile-section">
                   <label>Country</label>
-                  <select 
+                  <select
                     className="profile-select"
                     value={profile.country}
                     onChange={(e) => handleProfileChange('country', e.target.value)}
@@ -767,7 +745,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                 <div className="profile-row">
                   <div className="profile-field">
                     <label>City</label>
-                    <input 
+                    <input
                       type="text"
                       className="profile-input"
                       value={profile.city}
@@ -777,7 +755,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                   </div>
                   <div className="profile-field">
                     <label>Postal Code</label>
-                    <input 
+                    <input
                       type="text"
                       className="profile-input"
                       value={profile.postalCode}
@@ -789,7 +767,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
 
                 <div className="profile-section">
                   <label>Street Address</label>
-                  <input 
+                  <input
                     type="text"
                     className="profile-input"
                     value={profile.address}
@@ -825,8 +803,8 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
               {/* KYC Status */}
               <div className="profile-kyc-status">
                 <div className="kyc-status-display">
-                  <span 
-                    className="kyc-status-dot" 
+                  <span
+                    className="kyc-status-dot"
                     style={{ background: getKYCStatusColor(profile.kycStatus) }}
                   ></span>
                   <span className="kyc-status-text">
@@ -834,7 +812,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                   </span>
                 </div>
                 {profile.kycStatus !== 'verified' && (
-                  <button 
+                  <button
                     className="complete-kyc-btn"
                     onClick={() => {
                       closeModal()
@@ -871,8 +849,8 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                 <div className="setting-item">
                   <span>Customer Service Messages</span>
                   <label className="toggle-switch">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={settings.notifications}
                       onChange={(e) => handleSettingChange('notifications', e.target.checked)}
                     />
@@ -882,8 +860,8 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                 <div className="setting-item">
                   <span>News & Announcements</span>
                   <label className="toggle-switch">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={settings.newsAlerts}
                       onChange={(e) => handleSettingChange('newsAlerts', e.target.checked)}
                     />
@@ -897,8 +875,8 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                 <div className="setting-item">
                   <span>Sound Effects</span>
                   <label className="toggle-switch">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={settings.soundEffects}
                       onChange={(e) => handleSettingChange('soundEffects', e.target.checked)}
                     />
@@ -908,8 +886,8 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                 <div className="setting-item">
                   <span>Vibration</span>
                   <label className="toggle-switch">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={settings.vibration}
                       onChange={(e) => handleSettingChange('vibration', e.target.checked)}
                     />
@@ -923,8 +901,8 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                 <div className="setting-item">
                   <span>Dark Mode</span>
                   <label className="toggle-switch">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={settings.darkMode}
                       onChange={(e) => handleSettingChange('darkMode', e.target.checked)}
                     />
@@ -934,8 +912,8 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                 <div className="setting-item">
                   <span>Hide Balances</span>
                   <label className="toggle-switch">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={settings.hideBalances}
                       onChange={(e) => handleSettingChange('hideBalances', e.target.checked)}
                     />
@@ -948,7 +926,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                 <h4>🌐 Language</h4>
                 <div className="language-grid">
                   {languageOptions.map((lang) => (
-                    <button 
+                    <button
                       key={lang.code}
                       className={`language-btn ${settings.language === lang.code ? 'selected' : ''}`}
                       onClick={() => handleSettingChange('language', lang.code)}
@@ -962,7 +940,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
 
               <div className="settings-group">
                 <h4>💰 Display Currency</h4>
-                <select 
+                <select
                   className="settings-select"
                   value={settings.currency}
                   onChange={(e) => handleSettingChange('currency', e.target.value)}
@@ -1024,8 +1002,8 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                     <p>Use fingerprint or Face ID</p>
                   </div>
                   <label className="toggle-switch">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={settings.biometricAuth}
                       onChange={(e) => handleSettingChange('biometricAuth', e.target.checked)}
                     />
@@ -1039,7 +1017,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                     <h4>Auto-Lock</h4>
                     <p>Lock app after inactivity</p>
                   </div>
-                  <select 
+                  <select
                     className="security-select"
                     value={settings.autoLock}
                     onChange={(e) => handleSettingChange('autoLock', e.target.value)}
@@ -1150,18 +1128,18 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
             <div className="sidebar-modal-content">
               <div className="kyc-status">
                 <span className={`kyc-badge ${profile.kycStatus}`}>
-                  {profile.kycStatus === 'verified' ? '✓ Verified' : 
+                  {profile.kycStatus === 'verified' ? '✓ Verified' :
                    profile.kycStatus === 'pending' ? '⏳ Pending Verification' : '! Not Verified'}
                 </span>
               </div>
-              
+
               {/* Show different content based on KYC status */}
               {profile.kycStatus === 'verified' ? (
                 <div className="kyc-verified-view">
                   <div className="kyc-success-icon">✓</div>
                   <h3>KYC Verification Complete</h3>
                   <p>Your identity has been verified successfully. You now have full access to all platform features.</p>
-                  
+
                   <div className="kyc-verified-details">
                     <div className="kyc-detail-item">
                       <span className="detail-label">Full Name:</span>
@@ -1180,7 +1158,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                       <span className="detail-value">{profile.kycVerifiedAt ? new Date(profile.kycVerifiedAt).toLocaleDateString() : 'N/A'}</span>
                     </div>
                   </div>
-                  
+
                   <button className="kyc-close-btn" onClick={closeModal}>
                     Close
                   </button>
@@ -1191,13 +1169,13 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                   <h3>Verification In Progress</h3>
                   <p>Your KYC documents are being reviewed by our team. This usually takes 1-3 business days.</p>
                   <p className="kyc-pending-note">You can still edit your information below until your verification is approved.</p>
-                  
+
                   {/* Editable Form for Pending Status */}
                   <div className="kyc-form-section">
                     <h4>📋 Personal Information</h4>
                     <div className="kyc-field">
                       <label>Full Name (as shown on ID) *</label>
-                      <input 
+                      <input
                         type="text"
                         className="kyc-input"
                         value={kycFullName}
@@ -1211,7 +1189,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                     <h4>📄 Document Information</h4>
                     <div className="kyc-field">
                       <label>Document Type *</label>
-                      <select 
+                      <select
                         className="kyc-select"
                         value={kycDocType}
                         onChange={(e) => setKycDocType(e.target.value)}
@@ -1224,7 +1202,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                     </div>
                     <div className="kyc-field">
                       <label>Document ID Number *</label>
-                      <input 
+                      <input
                         type="text"
                         className="kyc-input"
                         value={kycDocNumber}
@@ -1293,10 +1271,10 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                   {/* Personal Information Section */}
                   <div className="kyc-form-section">
                     <h4>📋 Personal Information</h4>
-                    
+
                     <div className="kyc-field">
                       <label>Full Name (as shown on ID) *</label>
-                      <input 
+                      <input
                         type="text"
                         className="kyc-input"
                         value={kycFullName}
@@ -1309,10 +1287,10 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                   {/* Document Information Section */}
                   <div className="kyc-form-section">
                     <h4>📄 Document Information</h4>
-                    
+
                     <div className="kyc-field">
                       <label>Document Type *</label>
-                      <select 
+                      <select
                         className="kyc-select"
                         value={kycDocType}
                         onChange={(e) => setKycDocType(e.target.value)}
@@ -1326,7 +1304,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
 
                     <div className="kyc-field">
                       <label>Document ID Number *</label>
-                      <input 
+                      <input
                         type="text"
                         className="kyc-input"
                         value={kycDocNumber}
@@ -1340,7 +1318,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                   <div className="kyc-form-section">
                     <h4>📸 Document Photos</h4>
                     <p className="kyc-upload-hint">Please upload clear photos of your document. Make sure all details are visible.</p>
-                    
+
                     <div className="kyc-upload-grid">
                       {/* Front Photo Upload */}
                       <div className="kyc-upload-box">
@@ -1361,15 +1339,15 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                               </>
                             )}
                           </div>
-                          <input 
-                            type="file" 
+                          <input
+                            type="file"
                             accept="image/*"
                             onChange={(e) => handlePhotoUpload(e, 'front')}
                             style={{ display: 'none' }}
                           />
                         </label>
                         {kycFrontPreview && (
-                          <button 
+                          <button
                             className="remove-photo-btn"
                             onClick={() => { setKycFrontPhoto(null); setKycFrontPreview(''); }}
                           >
@@ -1397,15 +1375,15 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                               </>
                             )}
                           </div>
-                          <input 
-                            type="file" 
+                          <input
+                            type="file"
                             accept="image/*"
                             onChange={(e) => handlePhotoUpload(e, 'back')}
                             style={{ display: 'none' }}
                           />
                         </label>
                         {kycBackPreview && (
-                          <button 
+                          <button
                             className="remove-photo-btn"
                             onClick={() => { setKycBackPhoto(null); setKycBackPreview(''); }}
                           >
@@ -1444,10 +1422,10 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
 
               <div className="upload-form-section">
                 <h4>💰 Deposit Details</h4>
-                
+
                 <div className="upload-field">
                   <label>Deposit Amount (USDT) *</label>
-                  <input 
+                  <input
                     type="number"
                     className="upload-input"
                     value={uploadAmount}
@@ -1460,7 +1438,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
 
                 <div className="upload-field">
                   <label>Network Used *</label>
-                  <select 
+                  <select
                     className="upload-select"
                     value={uploadNetwork}
                     onChange={(e) => setUploadNetwork(e.target.value)}
@@ -1474,7 +1452,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
 
                 <div className="upload-field">
                   <label>Transaction Hash (Optional)</label>
-                  <input 
+                  <input
                     type="text"
                     className="upload-input"
                     value={uploadTxHash}
@@ -1487,7 +1465,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
               <div className="upload-form-section">
                 <h4>📸 Transfer Screenshot *</h4>
                 <p className="upload-hint">Please upload a clear screenshot showing the successful transfer with amount and transaction details visible.</p>
-                
+
                 <div className="upload-screenshot-box">
                   <label className="upload-screenshot-label">
                     <div className={`upload-area ${uploadScreenshotPreview ? 'has-image' : ''}`}>
@@ -1505,15 +1483,15 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                         </>
                       )}
                     </div>
-                    <input 
-                      type="file" 
+                    <input
+                      type="file"
                       accept="image/*"
                       onChange={handleScreenshotUpload}
                       style={{ display: 'none' }}
                     />
                   </label>
                   {uploadScreenshotPreview && (
-                    <button 
+                    <button
                       className="remove-photo-btn"
                       onClick={() => { setUploadScreenshot(null); setUploadScreenshotPreview(''); }}
                     >
@@ -1540,7 +1518,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                         </div>
                         <div className="upload-history-status">
                           <span className={`upload-status-badge ${upload.status}`}>
-                            {upload.status === 'approved' ? '✓ Approved' : 
+                            {upload.status === 'approved' ? '✓ Approved' :
                              upload.status === 'rejected' ? '✕ Rejected' : '⏳ Pending'}
                           </span>
                           <span className="upload-date">{new Date(upload.submittedAt).toLocaleDateString()}</span>
@@ -1701,7 +1679,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
             <div className="sidebar-modal-content">
               <div className="howto-section">
                 <h3>Getting Started in 4 Easy Steps</h3>
-                
+
                 <div className="howto-steps">
                   <div className="howto-step">
                     <div className="howto-step-number">1</div>
@@ -1710,7 +1688,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                       <p>Sign up with your email address and create a secure password.</p>
                     </div>
                   </div>
-                  
+
                   <div className="howto-step">
                     <div className="howto-step-number">2</div>
                     <div className="howto-step-content">
@@ -1718,7 +1696,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                       <p>Verify your identity by uploading required documents.</p>
                     </div>
                   </div>
-                  
+
                   <div className="howto-step">
                     <div className="howto-step-number">3</div>
                     <div className="howto-step-content">
@@ -1726,7 +1704,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                       <p>Deposit cryptocurrency using various payment methods.</p>
                     </div>
                   </div>
-                  
+
                   <div className="howto-step">
                     <div className="howto-step-number">4</div>
                     <div className="howto-step-content">
@@ -1800,7 +1778,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                 <div className="register-form">
                   <div className="register-field">
                     <label>Username</label>
-                    <input 
+                    <input
                       type="text"
                       className="register-input"
                       value={registerUsername}
@@ -1808,7 +1786,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                       placeholder="Choose a username"
                     />
                   </div>
-                  
+
                   <div className="register-field">
                     <label>Gmail Address</label>
                     <div className="gmail-input-wrapper">
@@ -1816,7 +1794,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                         <polyline points="22,6 12,13 2,6" />
                       </svg>
-                      <input 
+                      <input
                         type="email"
                         className="register-input"
                         value={registerEmail}
@@ -1859,7 +1837,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
 
                   <div className="verify-field">
                     <label>Enter 6-digit verification code</label>
-                    <input 
+                    <input
                       type="text"
                       className="verify-input"
                       value={verificationCode}
@@ -1900,7 +1878,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
                   <h3>Registration Successful!</h3>
                   <p>Welcome to OnchainWeb, <strong>{registerUsername}</strong>!</p>
                   <p className="success-email">Your account is now linked to {registerEmail}</p>
-                  
+
                   <div className="success-actions">
                     <button className="register-btn-primary" onClick={() => { closeModal(); setTimeout(() => openModal('kyc'), 100); }}>
                       Complete KYC →

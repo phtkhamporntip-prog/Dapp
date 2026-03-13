@@ -9,9 +9,9 @@
  * - Cross-platform session consistency
  */
 
-import React, { useState, useEffect } from 'react'
-import { useUniversalWallet, WALLET_CONNECTORS, detectEnvironment, detectAvailableWallets } from '../lib/walletConnect.jsx'
-import { userAPI } from '../lib/api'
+import { useState, useEffect, useMemo } from 'react'
+import { useUniversalWallet, detectEnvironment, detectAvailableWallets } from '../lib/walletConnect.jsx'
+import { autoRegisterUser } from '../services/walletService.js'
 
 export default function WalletGate({ onConnect, children, allowOpenAccess = false }) {
     const wallet = useUniversalWallet()
@@ -36,31 +36,27 @@ export default function WalletGate({ onConnect, children, allowOpenAccess = fals
         }
     }, [allowOpenAccess])
 
-    // Register user in backend
+    // Register user in backend and Firebase
     const registerUserInBackend = async (address, walletType) => {
         try {
-            console.log('Registering user in backend:', address, walletType)
+            console.log('Registering user in Firebase:', address, walletType)
+            
+            // Register in Firebase (primary)
+            await autoRegisterUser(address)
+            
+            console.log('User registered in Firebase successfully')
+            
+            // Update local profile
             const existingProfile = localStorage.getItem('userProfile')
             const profileData = existingProfile ? JSON.parse(existingProfile) : {}
-
-            const user = await userAPI.loginByWallet(
-                address,
-                profileData.username || `User_${address.substring(2, 8)}`,
-                profileData.email || '',
-                walletType
-            )
-
-            if (user) {
-                console.log('User registered successfully:', user)
-                localStorage.setItem('backendUserId', user._id)
-                localStorage.setItem('backendUser', JSON.stringify(user))
-                if (user.userId) {
-                    localStorage.setItem('realAccountId', user.userId)
-                    const updatedProfile = { ...profileData, userId: user.userId, wallet: address, walletType }
-                    localStorage.setItem('userProfile', JSON.stringify(updatedProfile))
-                }
+            const updatedProfile = { 
+                ...profileData, 
+                wallet: address, 
+                walletType 
             }
-            return user
+            localStorage.setItem('userProfile', JSON.stringify(updatedProfile))
+            
+            return true
         } catch (error) {
             console.error('Failed to register user:', error)
             return null
@@ -83,8 +79,9 @@ export default function WalletGate({ onConnect, children, allowOpenAccess = fals
                 onConnect(result.address)
             }
 
-            // Reload to show app
-            window.location.reload()
+            // Connection successful - wallet state will update and children will render
+            // No need to reload, React will re-render automatically
+            console.log('[WalletGate] Connection successful:', result.address)
 
         } catch (err) {
             if (err.message !== 'REDIRECT_TO_WALLET') {
@@ -102,8 +99,9 @@ export default function WalletGate({ onConnect, children, allowOpenAccess = fals
         setSkipGate(true)
     }
 
-    const popularWallets = availableWallets.filter(w => w.popular)
-    const otherWallets = availableWallets.filter(w => !w.popular)
+    // Memoize wallet filtering to prevent recalculation on every render
+    const popularWallets = useMemo(() => availableWallets.filter(w => w.popular), [availableWallets])
+    const otherWallets = useMemo(() => availableWallets.filter(w => !w.popular), [availableWallets])
 
     // If connected or in open access mode, show app
     if (wallet.isConnected || skipGate) {
