@@ -55,10 +55,10 @@ npm install -g firebase-tools
 # Login to Firebase
 firebase login
 
-# Deploy rules and indexes
-cd /home/runner/work/Snipe-/Snipe-
+# From the repository root (where firebase.json is located), deploy rules and indexes
 firebase deploy --only firestore:rules,firestore:indexes
 ```
+
 
 ### 2. Create Master Admin Account
 
