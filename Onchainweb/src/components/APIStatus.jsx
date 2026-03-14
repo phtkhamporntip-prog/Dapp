@@ -68,15 +68,10 @@ export function useAPIHealth(checkInterval = 0) {
 
 /**
  * API Status Banner Component
- * Shows legacy API connection status at the top of the page.
- * Uses the API base URL derived from VITE_API_BASE (or the default Render URL).
+ * Shows connection status at the top of the page
  */
 export function APIStatusBanner({ onDismiss }) {
-    return <APIStatusBannerInner onDismiss={onDismiss} />;
-}
-
-function APIStatusBannerInner({ onDismiss }) {
-    const { status, error, mongoConnected, refresh } = useAPIHealth(30000); // Check every 30s
+    const { status, error, refresh } = useAPIHealth(30000); // Check every 30s
     const [dismissed, setDismissed] = useState(false);
 
     if (dismissed || status === 'ok') return null;
@@ -87,37 +82,18 @@ function APIStatusBannerInner({ onDismiss }) {
     };
 
     return (
-        <div
-            className={`fixed top-0 left-0 right-0 z-50 px-4 py-3 ${
-                status === 'checking' ? 'bg-yellow-600' : 'bg-red-600'
-            }`}
-        >
+        <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-3 ${status === 'checking' ? 'bg-yellow-600' : 'bg-red-600'
+            }`}>
             <div className="max-w-7xl mx-auto flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     {status === 'checking' ? (
                         <svg className="w-5 h-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                            <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                            ></circle>
-                            <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                     ) : (
                         <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                            />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                     )}
                     <span className="text-white text-sm font-medium">

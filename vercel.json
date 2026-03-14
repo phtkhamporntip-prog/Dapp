@@ -1,11 +1,40 @@
 {
-    "installCommand": "cd Onchainweb && npm install",
-    "buildCommand": "cd Onchainweb && npm run build",
-    "outputDirectory": "Onchainweb/dist",
-    "rewrites": [
+  "version": 2,
+  "framework": "vite",
+  "buildCommand": "cd Onchainweb && npm install && npm run build",
+  "outputDirectory": "Onchainweb/dist",
+  "installCommand": "cd Onchainweb && npm install",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
         {
-            "source": "/(.*)",
-            "destination": "/index.html"
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://vitals.vercel-insights.com https://vercel.live https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://vitals.vercel-insights.com wss://*.walletconnect.com https://*.walletconnect.com https://api.web3modal.org https://pulse.walletconnect.org https://vercel.live; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
         }
-    ]
+      ]
+    }
+  ]
 }
