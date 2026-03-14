@@ -68,7 +68,8 @@ export function useAPIHealth(checkInterval = 0) {
 
 /**
  * API Status Banner Component
- * Shows connection status at the top of the page
+ * Shows legacy API connection status at the top of the page.
+ * Uses the API base URL derived from VITE_API_BASE (or the default Render URL).
  */
 export function APIStatusBanner({ onDismiss }) {
     const { status, error, refresh } = useAPIHealth(30000); // Check every 30s
