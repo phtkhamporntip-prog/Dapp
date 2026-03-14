@@ -1,7 +1,7 @@
 {
   "version": 2,
   "framework": "vite",
-  "buildCommand": "cd Onchainweb && npm install && npm run build",
+  "buildCommand": "cd Onchainweb && npm run build",
   "outputDirectory": "Onchainweb/dist",
   "installCommand": "cd Onchainweb && npm install",
   "rewrites": [
