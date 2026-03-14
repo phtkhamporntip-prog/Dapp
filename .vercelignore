@@ -1,17 +1,17 @@
-# Deploy only the frontend app
+# Deploy only the frontend app - ignore everything at root first
 /*
-!.vercel.json
+
+# Keep essential config files
+!vercel.json
+
+# Keep the Onchainweb frontend app directory and all its contents
 !Onchainweb
 !Onchainweb/**
 
-# Exclude build outputs and dependencies
-node_modules
-Onchainweb/node_modules
-Onchainweb/dist
-Onchainweb/.vercel
-Onchainweb/.cache
-Onchainweb/.turbo
-Onchainweb/.next
-Onchainweb/.git
-!README.md
-!LICENSE
+# Exclude build outputs and dependencies from anywhere
+**/node_modules
+**/dist
+**/.vercel
+**/.cache
+**/.turbo
+**/.next
