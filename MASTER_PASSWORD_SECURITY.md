@@ -12,15 +12,15 @@ The auto-setup feature is designed to replicate the old backend's `MASTER_PASSWO
 
 ### 1. Environment Variable Exposure (VITE_ Prefix)
 
-**Question:** Why use `VITE_MASTER_PASSWORD` when VITE_ variables are exposed to the client?
+**Question:** Why use `VITE_MASTER_PASSWORD` when VITE_ variables are bundled into and exposed by the frontend?
 
 **Answer:** 
-- This is **intentional** and matches the old backend behavior
-- The old system also had `MASTER_PASSWORD` as an environment variable
-- Firebase Auth validates credentials **server-side**, so they're as secure as any Firebase email/password login
-- The password never appears in the compiled JavaScript bundle - only the Vite build process has access
+- Any `import.meta.env.VITE_*` value that is referenced in frontend code is **inlined into the compiled JavaScript bundle** and can be read by anyone with access to the app
+- This means `VITE_MASTER_PASSWORD` **must be treated as public** if it is used in the frontend; it is not a secret and must **not** be relied on for production security
+- `VITE_MASTER_PASSWORD` is acceptable only for **local development / demo auto-setup**, where convenience is prioritized and the risk is limited
+- For production, any “master account” auto-setup must be done via a **trusted server-side mechanism** (for example, Firebase Admin SDK in a Cloud Function, one-time provisioning scripts, or manual admin creation), not with a Vite-exposed env var
 
-**Security Features:**
+**Security Features (Firebase Auth itself):**
 - ✅ Firebase validates credentials on their servers (not client-side)
 - ✅ Passwords are hashed by Firebase (bcrypt)
 - ✅ Failed login attempts are rate-limited by Firebase
@@ -28,14 +28,14 @@ The auto-setup feature is designed to replicate the old backend's `MASTER_PASSWO
 
 **Comparison with Old Backend:**
 ```bash
-# Old backend (environment variable):
-MASTER_PASSWORD=secure123  # Also exposed in backend env
+# Old backend (environment variable, server-side only):
+MASTER_PASSWORD=secure123  # Never shipped to the browser; only the backend process could read it
 
-# New system (same approach):
-VITE_MASTER_PASSWORD=secure123  # Used to create Firebase account
+# New system (frontend env var, if used):
+VITE_MASTER_PASSWORD=secure123  # If used in client code, this value is bundled and visible to users
 ```
 
-Both systems rely on environment variable security. The key difference is that the new system uses Firebase's authentication infrastructure instead of a custom backend.
+The old backend's `MASTER_PASSWORD` was a **server-side secret**, whereas `VITE_MASTER_PASSWORD` used in the frontend is **public configuration**. In production, do not ship any master password to clients; instead, perform master/admin auto-setup with a trusted server-side process that talks to Firebase directly.
 
 ### 2. Auto-Setup on Component Mount
 
