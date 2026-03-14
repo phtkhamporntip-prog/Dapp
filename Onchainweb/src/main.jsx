@@ -30,9 +30,6 @@ import ConfigValidator from './components/ConfigValidator.jsx'
 // Consent banner for GDPR compliance
 import ConsentBanner from './components/ConsentBanner.jsx'
 
-// 404 Not Found page
-import NotFound from './components/NotFound.jsx'
-
 // Admin feature disabled page
 import AdminFeatureDisabled from './components/AdminFeatureDisabled.jsx'
 
@@ -105,7 +102,8 @@ if (!envCheck.valid && import.meta.env.PROD) {
               <ConsentBanner />
               <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
-                  <Route path={ROUTES.HOME} element={<MainApp />} />
+                  {/* Main app route - uses wildcard so nested routes (/trade, /wallet) inside App.jsx resolve correctly */}
+                  <Route path="/*" element={<MainApp />} />
                   {/* Admin route - always registered, but shows disabled message if feature not enabled */}
                   <Route
                     path={ROUTES.ADMIN}
@@ -132,8 +130,6 @@ if (!envCheck.valid && import.meta.env.PROD) {
                       )
                     }
                   />
-                  {/* Catch-all route for 404 - must be last */}
-                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
             </AdminAutoDetector>
@@ -145,4 +141,4 @@ if (!envCheck.valid && import.meta.env.PROD) {
 }
 
 // Reference items to avoid ESLint false positives
-_debugUnused_Main({ Suspense, StrictMode, BrowserRouter, Routes, Route, UniversalWalletProvider, ErrorBoundary, MainApp, MasterAdminDashboard, AdminPanel, AdminRouteGuard, AdminAutoDetector, ConfigValidator, ConsentBanner, NotFound, AdminFeatureDisabled, LoadingSpinner, SpeedInsights });
+_debugUnused_Main({ Suspense, StrictMode, BrowserRouter, Routes, Route, UniversalWalletProvider, ErrorBoundary, MainApp, MasterAdminDashboard, AdminPanel, AdminRouteGuard, AdminAutoDetector, ConfigValidator, ConsentBanner, AdminFeatureDisabled, LoadingSpinner, SpeedInsights });
