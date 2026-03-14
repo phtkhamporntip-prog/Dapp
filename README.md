@@ -10,7 +10,7 @@ To get started with the project, follow these steps:
 1. **Clone the repository**
 2. **Install dependencies**: `cd Onchainweb && npm install`
 3. **Set up environment variables**: Create a `.env` file in the `Onchainweb` directory and add the required Firebase and WalletConnect credentials.
-4. **Run the development server**: `npm run dev`
+4. **Run the development server**: `cd Onchainweb && npm run dev`
 
 For more detailed instructions, please refer to the `QUICK_START_GUIDE.md` document.
 
