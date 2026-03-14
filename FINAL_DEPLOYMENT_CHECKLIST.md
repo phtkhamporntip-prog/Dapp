@@ -80,7 +80,7 @@ firebase deploy --only firestore:rules
    https://your-deployed-url.com/master-admin
    ```
    - Username: `master`
-   - Password: `MasterAdmin@2026!` (or your VITE_MASTER_PASSWORD)
+   - Password: `YOUR_MASTER_PASSWORD_HERE` (configured via `VITE_MASTER_PASSWORD` in your environment)
    
    **Expected Behavior:**
    - ✅ Login form appears
