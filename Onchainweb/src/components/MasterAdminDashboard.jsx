@@ -234,7 +234,218 @@ export default function MasterAdminDashboard() {
                     Sign Out
                 </button>
             </nav>
-            {/* The rest of the dashboard UI will use the real-time state variables (users, admins, etc.) */}
+            
+            <div className="dashboard-content">
+                {/* Users Section - Real-time */}
+                <section className="dashboard-section">
+                    <h2>👥 Users ({users.length})</h2>
+                    <div className="data-list">
+                        {users.length === 0 ? (
+                            <p className="no-data">No users found</p>
+                        ) : (
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>User ID</th>
+                                        <th>Wallet</th>
+                                        <th>Balance</th>
+                                        <th>KYC Status</th>
+                                        <th>VIP Level</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {users.map(user => (
+                                        <tr key={user.id}>
+                                            <td>{user.id?.substring(0, 8)}...</td>
+                                            <td>{user.wallet?.substring(0, 8)}...</td>
+                                            <td>${user.balance || 0}</td>
+                                            <td><span className={`badge ${user.kycStatus || 'pending'}`}>{user.kycStatus || 'pending'}</span></td>
+                                            <td>Level {user.vipLevel || 1}</td>
+                                            <td>{user.status || 'active'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                </section>
+
+                {/* Admins Section - Real-time */}
+                <section className="dashboard-section">
+                    <h2>🔐 Admins ({admins.length})</h2>
+                    <div className="data-list">
+                        {admins.length === 0 ? (
+                            <p className="no-data">No admins found</p>
+                        ) : (
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Created By</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {admins.map(admin => (
+                                        <tr key={admin.id}>
+                                            <td>{admin.email}</td>
+                                            <td><span className={`badge ${admin.role || 'admin'}`}>{admin.role || 'admin'}</span></td>
+                                            <td>{admin.createdBy || 'master'}</td>
+                                            <td>{admin.status || 'active'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                </section>
+
+                {/* Deposits Section - Real-time */}
+                <section className="dashboard-section">
+                    <h2>💰 Deposits ({deposits.length})</h2>
+                    <div className="data-list">
+                        {deposits.length === 0 ? (
+                            <p className="no-data">No pending deposits</p>
+                        ) : (
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Timestamp</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {deposits.map(deposit => (
+                                        <tr key={deposit.id}>
+                                            <td>{deposit.userId?.substring(0, 8)}...</td>
+                                            <td>${deposit.amount || 0}</td>
+                                            <td><span className={`badge ${deposit.status || 'pending'}`}>{deposit.status || 'pending'}</span></td>
+                                            <td>{new Date(deposit.timestamp?.toMillis?.() || Date.now()).toLocaleString()}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                </section>
+
+                {/* Withdrawals Section - Real-time */}
+                <section className="dashboard-section">
+                    <h2>🏦 Withdrawals ({withdrawals.length})</h2>
+                    <div className="data-list">
+                        {withdrawals.length === 0 ? (
+                            <p className="no-data">No pending withdrawals</p>
+                        ) : (
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {withdrawals.map(withdrawal => (
+                                        <tr key={withdrawal.id}>
+                                            <td>{withdrawal.userId?.substring(0, 8)}...</td>
+                                            <td>${withdrawal.amount || 0}</td>
+                                            <td><span className={`badge ${withdrawal.status || 'pending'}`}>{withdrawal.status || 'pending'}</span></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                </section>
+
+                {/* Trades Section - Real-time */}
+                <section className="dashboard-section">
+                    <h2>📈 Trades ({trades.length})</h2>
+                    <div className="data-list">
+                        {trades.length === 0 ? (
+                            <p className="no-data">No trades found</p>
+                        ) : (
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Pair</th>
+                                        <th>Direction</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {trades.map(trade => (
+                                        <tr key={trade.id}>
+                                            <td>{trade.userId?.substring(0, 8)}...</td>
+                                            <td>{trade.pair || 'N/A'}</td>
+                                            <td><span className={`badge ${trade.direction || 'up'}`}>{trade.direction || 'up'}</span></td>
+                                            <td>${trade.amount || 0}</td>
+                                            <td>{trade.status || 'open'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                </section>
+
+                {/* AI Investments Section - Real-time */}
+                <section className="dashboard-section">
+                    <h2>🤖 AI Investments ({aiInvestments.length})</h2>
+                    <div className="data-list">
+                        {aiInvestments.length === 0 ? (
+                            <p className="no-data">No AI investments found</p>
+                        ) : (
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Amount</th>
+                                        <th>Current ROI</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {aiInvestments.map(investment => (
+                                        <tr key={investment.id}>
+                                            <td>{investment.userId?.substring(0, 8)}...</td>
+                                            <td>${investment.amount || 0}</td>
+                                            <td>{((investment.currentValue || 0) / (investment.amount || 1) - 1 * 100).toFixed(2)}%</td>
+                                            <td><span className={`badge ${investment.completed ? 'completed' : 'active'}`}>{investment.completed ? 'Completed' : 'Active'}</span></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                </section>
+
+                {/* Active Chats Section - Real-time */}
+                <section className="dashboard-section">
+                    <h2>💬 Active Chats ({activeChats.length})</h2>
+                    <div className="chat-list">
+                        {activeChats.length === 0 ? (
+                            <p className="no-data">No active chats</p>
+                        ) : (
+                            activeChats.map(chat => (
+                                <div key={chat.id} className="chat-item">
+                                    <h4>{chat.userName || 'Anonymous'}</h4>
+                                    <p className="chat-preview">{chat.lastMessage || 'No messages'}</p>
+                                    <span className="message-count">
+                                        {(chatMessages[chat.id] || []).length} messages
+                                    </span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </section>
+            </div>
         </div>
     );
 }

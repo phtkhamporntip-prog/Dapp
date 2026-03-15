@@ -298,7 +298,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
     try {
       // Get wallet address for user identification
       const wallet = localStorage.getItem('walletAddress')
-      if (wallet && isFirebaseAvailable) {
+      if (wallet && isFirebaseAvailable()) {
         // Submit KYC to Firebase
         // NOTE: Server-side validation should be added via Firebase Security Rules
         // or Cloud Functions to verify data format and prevent malicious submissions
@@ -374,7 +374,7 @@ export default function Sidebar({ isOpen, onClose, onFuturesClick, onBinaryClick
 
     try {
       // Submit to Firebase
-      if (wallet && isFirebaseAvailable) {
+      if (wallet && isFirebaseAvailable()) {
         // NOTE: Server-side validation should be added via Cloud Functions to
         // verify transaction on-chain before accepting deposit proof
         // Generate unique document ID using Firestore auto-ID

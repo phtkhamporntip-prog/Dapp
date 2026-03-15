@@ -1398,3 +1398,155 @@
     color: #7c3aed;
     font-weight: 600;
 }
+/* Dashboard Content Sections */
+.dashboard-content {
+    padding: 20px;
+    background: #f1f5f9;
+    min-height: calc(100vh - 120px);
+}
+
+.dashboard-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e2e8f0;
+}
+
+.dashboard-section h2 {
+    color: #1e293b;
+    font-size: 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.data-list {
+    overflow-x: auto;
+}
+
+.data-list table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-list thead {
+    background: #f0f4f8;
+}
+
+.data-list th {
+    padding: 12px;
+    text-align: left;
+    color: #475569;
+    font-weight: 600;
+    font-size: 14px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.data-list td {
+    padding: 12px;
+    color: #334155;
+    font-size: 14px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.data-list tbody tr:hover {
+    background: #f8fafc;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge.pending {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.badge.approved,
+.badge.verified,
+.badge.active,
+.badge.completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge.rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge.master {
+    background: #ddd6fe;
+    color: #5b21b6;
+}
+
+.badge.admin {
+    background: #bfdbfe;
+    color: #1e40af;
+}
+
+.badge.up {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge.down {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.no-data {
+    text-align: center;
+    color: #94a3b8;
+    padding: 40px 20px;
+    font-style: italic;
+}
+
+.chat-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.chat-item:hover {
+    background: #efcbf9;
+    border-color: #c084fc;
+}
+
+.chat-item h4 {
+    color: #1e293b;
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.chat-preview {
+    color: #64748b;
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.message-count {
+    display: inline-block;
+    background: #e0e7ff;
+    color: #3730a3;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
