@@ -115,6 +115,10 @@ export default function AdminPanel({ isOpen = true, onClose }) {
                 )}
                 {isAuthenticated ? (
                     <div className="admin-content">
+                    <div className="admin-panel-header">
+                            <img src="/logo.svg" alt="OnchainWeb" className="admin-logo-sm" />
+                            <span>Admin Panel</span>
+                        </div>
                         <div className="admin-tabs">
                             <button onClick={() => setActiveTab('users')} className={activeTab === 'users' ? 'active' : ''}>
                                 Users ({pendingKYC.length})
@@ -156,9 +160,15 @@ export default function AdminPanel({ isOpen = true, onClose }) {
                     </div>
                 ) : (
                     <form className="admin-login" onSubmit={onLogin}>
-                        <input value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} placeholder="Username" />
-                        <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="Password" />
-                        <button type="submit" disabled={isLoggingIn}>Login</button>
+                        <div className="admin-login-logo-wrap">
+                            <img src="/logo.svg" alt="OnchainWeb" className="admin-logo-md" />
+                            <p>Admin Login</p>
+                        </div>
+                        <input value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} placeholder="Username or Email" autoComplete="username" />
+                        <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="Password" autoComplete="current-password" />
+                        <button type="submit" disabled={isLoggingIn}>
+                            {isLoggingIn ? 'Signing in...' : 'Sign In'}
+                        </button>
                     </form>
                 )}
             </div>

@@ -110,7 +110,9 @@ export default function AdminLogin({ onLoginSuccess, allowedRoute = '/admin' }) 
 
       <div className="admin-login-box">
         <div className="admin-login-header">
-          <div className="admin-login-icon">🔐</div>
+          <div className="admin-login-icon">
+            <img src="/logo.svg" alt="OnchainWeb" className="admin-logo-lg" />
+          </div>
           <h1>Admin Access</h1>
           <p className="admin-login-subtitle">
             {allowedRoute === '/master-admin' ? 'Master Admin Portal' : 'Admin Panel'}
