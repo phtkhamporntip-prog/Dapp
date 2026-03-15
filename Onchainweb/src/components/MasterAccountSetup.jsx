@@ -149,7 +149,7 @@ export default function MasterAccountSetup({ onComplete }) {
       <div className="master-setup-box">
         <div className="master-setup-header">
           <div className="master-setup-icon" style={{ color: getStatusColor() }}>
-            {getStatusIcon()}
+            <img src="/logo.svg" alt="OnchainWeb" className="admin-logo-lg" style={{ marginBottom: '8px' }} />
           </div>
           <h1>Master Account Setup</h1>
           <p className="master-setup-subtitle">Platform Administration</p>

@@ -1,5 +1,5 @@
 
-import { doc, updateDoc, runTransaction, getDoc, setDoc, serverTimestamp, collection, getDocs, query, where, limit, onSnapshot, deleteDoc } from 'firebase/firestore';
+import { doc, updateDoc, runTransaction, setDoc, serverTimestamp, collection, getDocs, query, where, limit, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { formatApiError } from '../lib/errorHandling';
@@ -41,7 +41,7 @@ export const updateUserKYC = async (userId, kycStatus) => {
  * @param {number} [amount=0] - The amount of the deposit (only required for approval).
  */
 export const processDeposit = async (depositId, userId, newStatus, amount = 0) => {
-    if (!isFirebaseAvailable) {
+    if (!isFirebaseReady()) {
         // Fallback for localStorage
         try {
             const deposits = JSON.parse(localStorage.getItem('deposits') || '[]');

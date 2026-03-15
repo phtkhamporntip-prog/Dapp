@@ -181,24 +181,40 @@ export default function MasterAdminDashboard() {
         return (
             <div className="master-admin-login">
                 <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: '' })} />
-                <form onSubmit={handleLogin}>
-                    <h2>Master Admin Login</h2>
-                    <input
-                        type="text"
-                        placeholder="Username"
-                        value={loginData.username}
-                        onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
-                    />
-                    <input
-                        type="password"
-                        placeholder="Password"
-                        value={loginData.password}
-                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                    />
-                    <button type="submit" disabled={isLoggingIn}>
-                        {isLoggingIn ? 'Logging in...' : 'Login'}
-                    </button>
-                </form>
+                <div className="login-container">
+                    <div className="login-logo">
+                        <img src="/logo.svg" alt="OnchainWeb" className="admin-logo-lg" />
+                    </div>
+                    <h1>Master Admin</h1>
+                    <p>Secure administrative access</p>
+                    <form onSubmit={handleLogin}>
+                        <div className="login-field">
+                            <label htmlFor="username">Username or Email</label>
+                            <input
+                                id="username"
+                                type="text"
+                                placeholder="Enter username or email"
+                                value={loginData.username}
+                                onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
+                                autoComplete="username"
+                            />
+                        </div>
+                        <div className="login-field">
+                            <label htmlFor="password">Password</label>
+                            <input
+                                id="password"
+                                type="password"
+                                placeholder="Enter password"
+                                value={loginData.password}
+                                onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                                autoComplete="current-password"
+                            />
+                        </div>
+                        <button type="submit" className="login-btn" disabled={isLoggingIn}>
+                            {isLoggingIn ? 'Signing in...' : 'Sign In'}
+                        </button>
+                    </form>
+                </div>
             </div>
         );
     }
@@ -206,10 +222,18 @@ export default function MasterAdminDashboard() {
     return (
         <div className="master-admin-dashboard">
             <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: '' })} />
-            <header>
-                <h1>Master Admin Dashboard</h1>
-                <button onClick={handleLogout}>Logout</button>
-            </header>
+            <nav className="admin-top-nav">
+                <div className="nav-logo">
+                    <img src="/logo.svg" alt="OnchainWeb" className="admin-logo-sm" />
+                    <span className="nav-logo-brand">Master Admin</span>
+                </div>
+                <div className="nav-menu">
+                    <span className="nav-section-label">Dashboard</span>
+                </div>
+                <button className="logout-link" onClick={handleLogout}>
+                    Sign Out
+                </button>
+            </nav>
             {/* The rest of the dashboard UI will use the real-time state variables (users, admins, etc.) */}
         </div>
     );

@@ -1338,3 +1338,63 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ============================================
+   Logo Utility Classes (used across admin components)
+   ============================================ */
+.admin-logo-sm {
+    width: 32px;
+    height: 32px;
+    vertical-align: middle;
+}
+
+.admin-logo-md {
+    width: 48px;
+    height: 48px;
+    display: inline-block;
+}
+
+.admin-logo-lg {
+    width: 64px;
+    height: 64px;
+    display: block;
+    margin: 0 auto;
+}
+
+.admin-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-panel-header span {
+    font-weight: 700;
+    font-size: 16px;
+    color: #1e293b;
+}
+
+.admin-login-logo-wrap {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.admin-login-logo-wrap p {
+    margin: 8px 0 0;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.nav-logo-brand {
+    font-weight: 700;
+    color: #1e293b;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.nav-section-label {
+    color: #7c3aed;
+    font-weight: 600;
+}
