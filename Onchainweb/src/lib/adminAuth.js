@@ -1,4 +1,4 @@
-import { isFirebaseAvailable, auth } from './firebase'; // auth used by other flows; removed unused firebase/auth imports
+import { isFirebaseAvailable } from './firebase'; // auth used by other flows; removed unused firebase/auth imports
 
 // Admin roles and permissions
 export const ROLES = {
@@ -32,11 +32,14 @@ export const getAllowedAdminEmails = () => {
 
 /**
  * Checks if an email is in the admin allowlist.
+ * If the allowlist is empty, all emails are considered allowed
+ * (the admins Firestore collection acts as the authorization gate).
  * @param {string} email - The email to check.
- * @returns {boolean} True if the email is in the allowlist.
+ * @returns {boolean} True if the email is in the allowlist (or allowlist is empty).
  */
 const isEmailInAllowlist = (email) => {
   const allowedEmails = getAllowedAdminEmails();
+  if (allowedEmails.length === 0) return true; // No allowlist configured → allow all (Firestore admins collection is the gate)
   return allowedEmails.includes(email.toLowerCase());
 };
 
@@ -73,7 +76,7 @@ export const handleAdminLogin = async (email, password, firebaseSignIn) => {
   }
 
   // Primary Firebase authentication
-  const userCredential = await firebaseSignIn(auth, email, password);
+  const userCredential = await firebaseSignIn(email, password);
   // The rest of the admin data (role, permissions) should be fetched from Firestore
   // in the component after a successful login.
   return { user: userCredential.user };
