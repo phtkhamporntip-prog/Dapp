@@ -7,22 +7,30 @@ import Footer from './components/Footer';
 import Dashboard from './components/Dashboard';
 import Trade from './components/Trade';
 import Wallet from './components/Wallet';
+import BinaryOptions from './components/BinaryOptions';
+import AIArbitrage from './components/AIArbitrage';
+import BottomNav from './components/BottomNav';
 import NotFound from './components/NotFound';
 import ErrorBoundary from './components/ErrorBoundary';
+import MasterAdminDashboard from './components/MasterAdminDashboard';
 
-function App() {
+function App () {
   return (
     <ErrorBoundary>
       <div className="app-container">
         <Header />
-        <main className="main-content">
+        <main className="main-content" id="main">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/trade" element={<Trade />} />
-            <Route path="/wallet" element={<Wallet />} />
+            <Route path="/trade/binary-options/*" element={<BinaryOptions />} />
+            <Route path="/trade/ai-arbitrage/*" element={<AIArbitrage />} />
+            <Route path="/wallet" element={<Wallet isOpen />} />
+            <Route path="/admin" element={<MasterAdminDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+        <BottomNav />
         <Footer />
       </div>
     </ErrorBoundary>

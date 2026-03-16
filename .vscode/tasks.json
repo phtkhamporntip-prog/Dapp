@@ -29,6 +29,14 @@
 				"kind": "build",
 				"isDefault": true
 			}
+		},
+		{
+			"type": "npm",
+			"script": "build",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build",
+			"detail": "cd Onchainweb && npm install && npm run build"
 		}
 	]
 }

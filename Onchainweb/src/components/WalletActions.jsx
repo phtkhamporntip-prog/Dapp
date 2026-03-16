@@ -2,44 +2,44 @@ import { useState, useEffect } from 'react'
 
 // Wallet Actions - Handles approve, deposit, signMessage for DeFi simulation
 // This is a simulated "smart contract" interface - admin controls all outcomes
-export default function WalletActions({ isOpen, onClose, onSuccess }) {
-  const [activeAction, setActiveAction] = useState(null) // 'approve', 'deposit', 'withdraw', 'vip'
-  const [selectedToken, setSelectedToken] = useState('USDT')
-  const [amount, setAmount] = useState('')
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [txHash, setTxHash] = useState('')
-  const [walletAddress, setWalletAddress] = useState(() => {
-    return localStorage.getItem('walletAddress') || ''
-  })
+export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
+  const [ activeAction, setActiveAction ] = useState( null ) // 'approve', 'deposit', 'withdraw', 'vip'
+  const [ selectedToken, setSelectedToken ] = useState( 'USDT' )
+  const [ amount, setAmount ] = useState( '' )
+  const [ isProcessing, setIsProcessing ] = useState( false )
+  const [ txHash, setTxHash ] = useState( '' )
+  const [ walletAddress, setWalletAddress ] = useState( () => {
+    return localStorage.getItem( 'walletAddress' ) || ''
+  } )
 
   // User's approved tokens
-  const [approvedTokens, setApprovedTokens] = useState(() => {
-    const saved = localStorage.getItem('approvedTokens')
-    return saved ? JSON.parse(saved) : {}
-  })
+  const [ approvedTokens, setApprovedTokens ] = useState( () => {
+    const saved = localStorage.getItem( 'approvedTokens' )
+    return saved ? JSON.parse( saved ) : {}
+  } )
 
   // User's deposit history (one-way deposits)
-  const [deposits, setDeposits] = useState(() => {
-    const saved = localStorage.getItem('userDeposits')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [ deposits, setDeposits ] = useState( () => {
+    const saved = localStorage.getItem( 'userDeposits' )
+    return saved ? JSON.parse( saved ) : []
+  } )
 
   // VIP unlock fee status
-  const [vipStatus, setVipStatus] = useState(() => {
-    const saved = localStorage.getItem('vipUnlockStatus')
-    return saved ? JSON.parse(saved) : { unlocked: false, feePaid: 0, requiredFee: 500 }
-  })
+  const [ vipStatus, setVipStatus ] = useState( () => {
+    const saved = localStorage.getItem( 'vipUnlockStatus' )
+    return saved ? JSON.parse( saved ) : { unlocked: false, feePaid: 0, requiredFee: 500 }
+  } )
 
   // Global settings from admin
-  const [adminSettings, setAdminSettings] = useState(() => {
-    const saved = localStorage.getItem('globalAdminSettings')
-    return saved ? JSON.parse(saved) : {
+  const [ adminSettings, setAdminSettings ] = useState( () => {
+    const saved = localStorage.getItem( 'globalAdminSettings' )
+    return saved ? JSON.parse( saved ) : {
       vipUnlockFee: 500,
       withdrawalEnabled: false,
       minDeposit: 50,
       withdrawalRequiresVIP: true
     }
-  })
+  } )
 
   // Supported tokens for approval
   const tokens = [
@@ -51,50 +51,50 @@ export default function WalletActions({ isOpen, onClose, onSuccess }) {
   ]
 
   // Save state to localStorage
-  useEffect(() => {
-    localStorage.setItem('approvedTokens', JSON.stringify(approvedTokens))
-  }, [approvedTokens])
+  useEffect( () => {
+    localStorage.setItem( 'approvedTokens', JSON.stringify( approvedTokens ) )
+  }, [ approvedTokens ] )
 
   // Quiet linter about assigned-but-not-used state setters / values
   const _debugUnused_WalletActions = () => {
-    if (typeof console !== 'undefined') console.debug('wallet-actions-unused', { txHash, setWalletAddress, setAdminSettings })
+    if ( typeof console !== 'undefined' ) console.debug( 'wallet-actions-unused', { txHash, setWalletAddress, setAdminSettings } )
   }
   _debugUnused_WalletActions()
 
-  useEffect(() => {
-    localStorage.setItem('userDeposits', JSON.stringify(deposits))
-  }, [deposits])
+  useEffect( () => {
+    localStorage.setItem( 'userDeposits', JSON.stringify( deposits ) )
+  }, [ deposits ] )
 
-  useEffect(() => {
-    localStorage.setItem('vipUnlockStatus', JSON.stringify(vipStatus))
-  }, [vipStatus])
+  useEffect( () => {
+    localStorage.setItem( 'vipUnlockStatus', JSON.stringify( vipStatus ) )
+  }, [ vipStatus ] )
 
   // Generate fake transaction hash
   const generateTxHash = () => {
     const chars = '0123456789abcdef'
     let hash = '0x'
-    for (let i = 0; i < 64; i++) {
-      hash += chars[Math.floor(Math.random() * 16)]
+    for ( let i = 0; i < 64; i++ ) {
+      hash += chars[ Math.floor( Math.random() * 16 ) ]
     }
     return hash
   }
 
   // Simulate MetaMask signature request
-  const requestSignature = async (message) => {
-    if (typeof window.ethereum !== 'undefined') {
+  const requestSignature = async ( message ) => {
+    if ( typeof window.ethereum !== 'undefined' ) {
       try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-        const signature = await window.ethereum.request({
+        const accounts = await window.ethereum.request( { method: 'eth_requestAccounts' } )
+        const signature = await window.ethereum.request( {
           method: 'personal_sign',
-          params: [message, accounts[0]]
-        })
-        return { success: true, signature, address: accounts[0] }
-      } catch (err) {
+          params: [ message, accounts[ 0 ] ]
+        } )
+        return { success: true, signature, address: accounts[ 0 ] }
+      } catch ( err ) {
         return { success: false, error: err.message }
       }
     } else {
       // Simulate signature for non-MetaMask wallets
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      await new Promise( resolve => setTimeout( resolve, 1500 ) )
       return {
         success: true,
         signature: generateTxHash(),
@@ -105,104 +105,104 @@ export default function WalletActions({ isOpen, onClose, onSuccess }) {
 
   // Handle token approval (MAX_UINT256)
   const handleApprove = async () => {
-    setIsProcessing(true)
+    setIsProcessing( true )
 
     try {
       // Request signature for approval
       const message = `Approve ${selectedToken} for OnchainWeb Trading\n\nBy signing this message, you approve OnchainWeb to access your ${selectedToken} tokens for trading.\n\nAmount: Unlimited\nContract: OnchainWeb Router\nNonce: ${Date.now()}`
 
-      const result = await requestSignature(message)
+      const result = await requestSignature( message )
 
-      if (result.success) {
+      if ( result.success ) {
         const hash = generateTxHash()
-        setTxHash(hash)
+        setTxHash( hash )
 
         // Save approval
-        setApprovedTokens(prev => ({
+        setApprovedTokens( prev => ( {
           ...prev,
-          [selectedToken]: {
+          [ selectedToken ]: {
             approved: true,
             amount: 'MAX_UINT256',
             timestamp: Date.now(),
             txHash: hash
           }
-        }))
+        } ) )
 
         // Log activity
-        logActivity('Token Approval', `Approved ${selectedToken} - unlimited amount`)
+        logActivity( 'Token Approval', `Approved ${selectedToken} - unlimited amount` )
 
-        setTimeout(() => {
-          alert(`✅ ${selectedToken} Approved Successfully!\n\nTransaction Hash:\n${hash}`)
-          setIsProcessing(false)
-        }, 2000)
+        setTimeout( () => {
+          alert( `✅ ${selectedToken} Approved Successfully!\n\nTransaction Hash:\n${hash}` )
+          setIsProcessing( false )
+        }, 2000 )
       } else {
-        alert(`❌ Approval Failed: ${result.error}`)
-        setIsProcessing(false)
+        alert( `❌ Approval Failed: ${result.error}` )
+        setIsProcessing( false )
       }
-    } catch (err) {
-      alert(`❌ Error: ${err.message}`)
-      setIsProcessing(false)
+    } catch ( err ) {
+      alert( `❌ Error: ${err.message}` )
+      setIsProcessing( false )
     }
   }
 
   // Handle deposit (one-way)
   const handleDeposit = async () => {
-    if (!amount || parseFloat(amount) < adminSettings.minDeposit) {
-      alert(`Minimum deposit is $${adminSettings.minDeposit}`)
+    if ( !amount || parseFloat( amount ) < adminSettings.minDeposit ) {
+      alert( `Minimum deposit is $${adminSettings.minDeposit}` )
       return
     }
 
     // Check if token is approved
-    if (!approvedTokens[selectedToken]?.approved) {
-      alert(`Please approve ${selectedToken} first before depositing`)
+    if ( !approvedTokens[ selectedToken ]?.approved ) {
+      alert( `Please approve ${selectedToken} first before depositing` )
       return
     }
 
-    setIsProcessing(true)
+    setIsProcessing( true )
 
     try {
       const message = `Deposit ${amount} ${selectedToken} to OnchainWeb\n\nAmount: ${amount} ${selectedToken}\nTo: OnchainWeb Vault\nNonce: ${Date.now()}`
 
-      const result = await requestSignature(message)
+      const result = await requestSignature( message )
 
-      if (result.success) {
+      if ( result.success ) {
         const hash = generateTxHash()
-        setTxHash(hash)
+        setTxHash( hash )
 
         const depositRecord = {
           id: Date.now(),
           token: selectedToken,
-          amount: parseFloat(amount),
-          usdValue: parseFloat(amount), // Assuming stablecoins
+          amount: parseFloat( amount ),
+          usdValue: parseFloat( amount ), // Assuming stablecoins
           txHash: hash,
           timestamp: Date.now(),
           status: 'pending', // Admin will approve
           from: walletAddress
         }
 
-        setDeposits(prev => [depositRecord, ...prev])
+        setDeposits( prev => [ depositRecord, ...prev ] )
 
         // Save to admin pending deposits
-        const adminDeposits = JSON.parse(localStorage.getItem('adminPendingDeposits') || '[]')
-        adminDeposits.unshift(depositRecord)
-        localStorage.setItem('adminPendingDeposits', JSON.stringify(adminDeposits))
+        const adminDeposits = JSON.parse( localStorage.getItem( 'adminPendingDeposits' ) || '[]' )
+        adminDeposits.unshift( depositRecord )
+        localStorage.setItem( 'adminPendingDeposits', JSON.stringify( adminDeposits ) )
 
         // Log activity
-        logActivity('Deposit', `Deposited ${amount} ${selectedToken}`)
+        logActivity( 'Deposit', `Deposited ${amount} ${selectedToken}` )
 
-        setTimeout(() => {
-          alert(`✅ Deposit Submitted!\n\nAmount: ${amount} ${selectedToken}\nTransaction Hash:\n${hash}\n\nYour deposit is being processed and will be credited to your account shortly.`)
-          setIsProcessing(false)
-          setAmount('')
-          if (onSuccess) onSuccess()
-        }, 3000)
+        setTimeout( () => {
+          alert( `✅ Deposit Submitted!\n\nAmount: ${amount} ${selectedToken}\nTransaction Hash:\n${hash}\n\nYour deposit is being processed and will be credited to your account shortly.` )
+          setIsProcessing( false )
+          setAmount( '' )
+          if ( onSuccess ) onSuccess()
+        }, 3000 )
       } else {
-        alert(`❌ Deposit Failed: ${result.error}`)
-        setIsProcessing(false)
+        alert( `❌ Deposit Failed: ${result.error}` )
+        setIsProcessing( false )
       }
-    } catch (err) {
-      alert(`❌ Error: ${err.message}`)
-      setIsProcessing(false)
+    } catch ( err ) {
+      alert( `❌ Error: ${err.message}` )
+      setIsProcessing( false )
     }
   }
 
@@ -210,103 +210,103 @@ export default function WalletActions({ isOpen, onClose, onSuccess }) {
   const handleVIPUnlock = async () => {
     const requiredFee = adminSettings.vipUnlockFee || 500
 
-    if (vipStatus.unlocked) {
-      alert('✅ Your VIP access is already unlocked!')
+    if ( vipStatus.unlocked ) {
+      alert( '✅ Your VIP access is already unlocked!' )
       return
     }
 
-    setIsProcessing(true)
+    setIsProcessing( true )
 
     try {
       const message = `VIP Access Unlock Fee\n\nAmount: $${requiredFee} USDT\nPurpose: Unlock VIP Trading Features\nBenefits:\n- Higher withdrawal limits\n- Priority support\n- Lower fees\n- Exclusive bonuses\n\nNonce: ${Date.now()}`
 
-      const result = await requestSignature(message)
+      const result = await requestSignature( message )
 
-      if (result.success) {
+      if ( result.success ) {
         const hash = generateTxHash()
-        setTxHash(hash)
+        setTxHash( hash )
 
         // Save VIP unlock request to admin
-        const vipRequests = JSON.parse(localStorage.getItem('adminVIPRequests') || '[]')
-        vipRequests.unshift({
+        const vipRequests = JSON.parse( localStorage.getItem( 'adminVIPRequests' ) || '[]' )
+        vipRequests.unshift( {
           id: Date.now(),
-          userId: localStorage.getItem('userId'),
+          userId: localStorage.getItem( 'userId' ),
           wallet: walletAddress,
           fee: requiredFee,
           txHash: hash,
           timestamp: Date.now(),
           status: 'pending'
-        })
-        localStorage.setItem('adminVIPRequests', JSON.stringify(vipRequests))
+        } )
+        localStorage.setItem( 'adminVIPRequests', JSON.stringify( vipRequests ) )
 
-        setVipStatus(prev => ({
+        setVipStatus( prev => ( {
           ...prev,
           feePaid: requiredFee,
           pendingApproval: true
-        }))
+        } ) )
 
         // Log activity
-        logActivity('VIP Unlock', `Paid $${requiredFee} VIP unlock fee`)
+        logActivity( 'VIP Unlock', `Paid $${requiredFee} VIP unlock fee` )
 
-        setTimeout(() => {
-          alert(`✅ VIP Unlock Fee Submitted!\n\nAmount: $${requiredFee}\nTransaction Hash:\n${hash}\n\nYour VIP access will be activated within 24 hours.`)
-          setIsProcessing(false)
-        }, 3000)
+        setTimeout( () => {
+          alert( `✅ VIP Unlock Fee Submitted!\n\nAmount: $${requiredFee}\nTransaction Hash:\n${hash}\n\nYour VIP access will be activated within 24 hours.` )
+          setIsProcessing( false )
+        }, 3000 )
       } else {
-        alert(`❌ Payment Failed: ${result.error}`)
-        setIsProcessing(false)
+        alert( `❌ Payment Failed: ${result.error}` )
+        setIsProcessing( false )
       }
-    } catch (err) {
-      alert(`❌ Error: ${err.message}`)
-      setIsProcessing(false)
+    } catch ( err ) {
+      alert( `❌ Error: ${err.message}` )
+      setIsProcessing( false )
     }
   }
 
   // Handle fake login signature
   const handleSignLogin = async () => {
-    setIsProcessing(true)
+    setIsProcessing( true )
 
     try {
       const message = `Welcome to OnchainWeb!\n\nClick to sign in and accept the OnchainWeb Terms of Service.\n\nThis request will not trigger a blockchain transaction or cost any gas fees.\n\nWallet: ${walletAddress}\nNonce: ${Date.now()}`
 
-      const result = await requestSignature(message)
+      const result = await requestSignature( message )
 
-      if (result.success) {
-        localStorage.setItem('walletSignature', result.signature)
-        localStorage.setItem('signedIn', 'true')
+      if ( result.success ) {
+        localStorage.setItem( 'walletSignature', result.signature )
+        localStorage.setItem( 'signedIn', 'true' )
 
         // Log activity
-        logActivity('Sign In', 'Wallet signature verified')
+        logActivity( 'Sign In', 'Wallet signature verified' )
 
-        setTimeout(() => {
-          alert('✅ Successfully signed in!')
-          setIsProcessing(false)
-          if (onSuccess) onSuccess()
-        }, 1000)
+        setTimeout( () => {
+          alert( '✅ Successfully signed in!' )
+          setIsProcessing( false )
+          if ( onSuccess ) onSuccess()
+        }, 1000 )
       } else {
-        alert(`❌ Sign in failed: ${result.error}`)
-        setIsProcessing(false)
+        alert( `❌ Sign in failed: ${result.error}` )
+        setIsProcessing( false )
       }
-    } catch (err) {
-      alert(`❌ Error: ${err.message}`)
-      setIsProcessing(false)
+    } catch ( err ) {
+      alert( `❌ Error: ${err.message}` )
+      setIsProcessing( false )
     }
   }
 
   // Log activity
-  const logActivity = (action, details) => {
-    const activities = JSON.parse(localStorage.getItem('userActivities') || '[]')
-    activities.unshift({
+  const logActivity = ( action, details ) => {
+    const activities = JSON.parse( localStorage.getItem( 'userActivities' ) || '[]' )
+    activities.unshift( {
       id: Date.now(),
       action,
       details,
       timestamp: Date.now(),
       wallet: walletAddress
-    })
-    localStorage.setItem('userActivities', JSON.stringify(activities.slice(0, 100)))
+    } )
+    localStorage.setItem( 'userActivities', JSON.stringify( activities.slice( 0, 100 ) ) )
   }
 
-  if (!isOpen) return null
+  if ( !isOpen ) return null
 
   return (
     <div className="wallet-actions-modal">
@@ -321,7 +321,7 @@ export default function WalletActions({ isOpen, onClose, onSuccess }) {
         <div className="wa-actions-grid">
           <button
             className={`wa-action-btn ${activeAction === 'approve' ? 'active' : ''}`}
-            onClick={() => setActiveAction('approve')}
+            onClick={() => setActiveAction( 'approve' )}
           >
             <span className="wa-action-icon">✅</span>
             <span className="wa-action-label">Approve Token</span>
@@ -330,7 +330,7 @@ export default function WalletActions({ isOpen, onClose, onSuccess }) {
 
           <button
             className={`wa-action-btn ${activeAction === 'deposit' ? 'active' : ''}`}
-            onClick={() => setActiveAction('deposit')}
+            onClick={() => setActiveAction( 'deposit' )}
           >
             <span className="wa-action-icon">💰</span>
             <span className="wa-action-label">Deposit</span>
@@ -339,7 +339,7 @@ export default function WalletActions({ isOpen, onClose, onSuccess }) {
 
           <button
             className={`wa-action-btn ${activeAction === 'vip' ? 'active' : ''}`}
-            onClick={() => setActiveAction('vip')}
+            onClick={() => setActiveAction( 'vip' )}
           >
             <span className="wa-action-icon">👑</span>
             <span className="wa-action-label">VIP Unlock</span>
@@ -348,11 +348,20 @@ export default function WalletActions({ isOpen, onClose, onSuccess }) {
 
           <button
             className={`wa-action-btn ${activeAction === 'sign' ? 'active' : ''}`}
-            onClick={() => setActiveAction('sign')}
+            onClick={() => setActiveAction( 'sign' )}
           >
             <span className="wa-action-icon">✍️</span>
             <span className="wa-action-label">Sign In</span>
             <span className="wa-action-desc">Verify wallet</span>
+          </button>
+
+          <button
+            className={`wa-action-btn ${activeAction === 'history' ? 'active' : ''}`}
+            onClick={() => setActiveAction( 'history' )}
+          >
+            <span className="wa-action-icon">📜</span>
+            <span className="wa-action-label">History</span>
+            <span className="wa-action-desc">View transactions</span>
           </button>
         </div>
 
@@ -365,21 +374,21 @@ export default function WalletActions({ isOpen, onClose, onSuccess }) {
             <div className="wa-token-select">
               <label>Select Token</label>
               <div className="wa-tokens">
-                {tokens.map(token => (
+                {tokens.map( token => (
                   <button
                     key={token.symbol}
-                    className={`wa-token-btn ${selectedToken === token.symbol ? 'active' : ''} ${approvedTokens[token.symbol]?.approved ? 'approved' : ''}`}
-                    onClick={() => setSelectedToken(token.symbol)}
+                    className={`wa-token-btn ${selectedToken === token.symbol ? 'active' : ''} ${approvedTokens[ token.symbol ]?.approved ? 'approved' : ''}`}
+                    onClick={() => setSelectedToken( token.symbol )}
                   >
                     <span className="token-icon">{token.icon}</span>
                     <span className="token-symbol">{token.symbol}</span>
-                    {approvedTokens[token.symbol]?.approved && <span className="approved-badge">✓</span>}
+                    {approvedTokens[ token.symbol ]?.approved && <span className="approved-badge">✓</span>}
                   </button>
-                ))}
+                ) )}
               </div>
             </div>
 
-            {approvedTokens[selectedToken]?.approved ? (
+            {approvedTokens[ selectedToken ]?.approved ? (
               <div className="wa-approved-info">
                 <span className="approved-icon">✅</span>
                 <span>{selectedToken} is already approved</span>
@@ -405,16 +414,16 @@ export default function WalletActions({ isOpen, onClose, onSuccess }) {
             <div className="wa-token-select">
               <label>Token</label>
               <div className="wa-tokens">
-                {tokens.map(token => (
+                {tokens.map( token => (
                   <button
                     key={token.symbol}
                     className={`wa-token-btn ${selectedToken === token.symbol ? 'active' : ''}`}
-                    onClick={() => setSelectedToken(token.symbol)}
+                    onClick={() => setSelectedToken( token.symbol )}
                   >
                     <span className="token-icon">{token.icon}</span>
                     <span className="token-symbol">{token.symbol}</span>
                   </button>
-                ))}
+                ) )}
               </div>
             </div>
 
@@ -423,17 +432,17 @@ export default function WalletActions({ isOpen, onClose, onSuccess }) {
               <input
                 type="number"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={( e ) => setAmount( e.target.value )}
                 placeholder={`Min ${adminSettings.minDeposit}`}
               />
               <div className="wa-amount-presets">
-                {[100, 500, 1000, 5000].map(amt => (
-                  <button key={amt} onClick={() => setAmount(amt.toString())}>${amt}</button>
-                ))}
+                {[ 100, 500, 1000, 5000 ].map( amt => (
+                  <button key={amt} onClick={() => setAmount( amt.toString() )}>${amt}</button>
+                ) )}
               </div>
             </div>
 
-            {!approvedTokens[selectedToken]?.approved && (
+            {!approvedTokens[ selectedToken ]?.approved && (
               <div className="wa-warning">
                 ⚠️ You need to approve {selectedToken} first before depositing
               </div>
@@ -442,7 +451,7 @@ export default function WalletActions({ isOpen, onClose, onSuccess }) {
             <button
               className="wa-main-btn deposit"
               onClick={handleDeposit}
-              disabled={isProcessing || !approvedTokens[selectedToken]?.approved}
+              disabled={isProcessing || !approvedTokens[ selectedToken ]?.approved}
             >
               {isProcessing ? '⏳ Processing...' : `Deposit ${amount || '0'} ${selectedToken}`}
             </button>
@@ -503,7 +512,7 @@ export default function WalletActions({ isOpen, onClose, onSuccess }) {
               <span className="wallet-label">Connected Wallet:</span>
               {walletAddress && (
                 <span className="wallet-address">
-                  {`${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`}
+                  {`${walletAddress.slice( 0, 6 )}...${walletAddress.slice( -4 )}`}
                 </span>
               )}
             </div>
@@ -518,11 +527,63 @@ export default function WalletActions({ isOpen, onClose, onSuccess }) {
           </div>
         )}
 
+        {/* Transaction History Section */}
+        {activeAction === 'history' && (
+          <div className="wa-section">
+            <h3>📜 Transaction History</h3>
+            <p className="wa-info">View all your deposits and withdrawals</p>
+
+            <div className="wa-history-tabs">
+              <button className="wa-history-tab active">
+                💰 Deposits ({deposits.length})
+              </button>
+              <button className="wa-history-tab">
+                🏦 Withdrawals (0)
+              </button>
+            </div>
+
+            {deposits.length === 0 ? (
+              <div className="wa-no-history">
+                <span className="no-history-icon">📭</span>
+                <p>No deposits yet. Start by making your first deposit!</p>
+              </div>
+            ) : (
+              <div className="wa-history-list">
+                {deposits.map( dep => (
+                  <div key={dep.id} className={`wa-history-item-full ${dep.status}`}>
+                    <div className="history-header">
+                      <span className="history-icon">💰</span>
+                      <div className="history-info">
+                        <span className="history-token">{dep.token}</span>
+                        <span className="history-time">
+                          {new Date( dep.timestamp ).toLocaleDateString()} {new Date( dep.timestamp ).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <div className="history-amount">
+                        <span className="amount">{dep.amount} {dep.token}</span>
+                        <span className="usd-value">${dep.usdValue.toFixed( 2 )}</span>
+                      </div>
+                    </div>
+                    <div className="history-details">
+                      <span className={`status-badge ${dep.status}`}>
+                        {dep.status === 'pending' ? '⏳ Pending' : dep.status === 'confirmed' ? '✅ Confirmed' : '❌ Failed'}
+                      </span>
+                      <span className="history-hash" title={dep.txHash}>
+                        TxHash: {dep.txHash.slice( 0, 16 )}...
+                      </span>
+                    </div>
+                  </div>
+                ) )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Recent Transactions */}
         {deposits.length > 0 && (
           <div className="wa-history">
             <h4>Recent Deposits</h4>
-            {deposits.slice(0, 3).map(dep => (
+            {deposits.slice( 0, 3 ).map( dep => (
               <div key={dep.id} className={`wa-history-item ${dep.status}`}>
                 <span className="hist-icon">💰</span>
                 <span className="hist-details">
@@ -532,7 +593,7 @@ export default function WalletActions({ isOpen, onClose, onSuccess }) {
                   {dep.status === 'pending' ? '⏳ Pending' : dep.status === 'confirmed' ? '✅ Confirmed' : '❌ Failed'}
                 </span>
               </div>
-            ))}
+            ) )}
           </div>
         )}
       </div>
@@ -920,6 +981,166 @@ export default function WalletActions({ isOpen, onClose, onSuccess }) {
         .hist-status.pending { color: #ffc107; }
         .hist-status.confirmed { color: #00ff88; }
         .hist-status.failed { color: #ff4d4d; }
+
+        /* History Section Styles */
+        .wa-history-tabs {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 20px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .wa-history-tab {
+          padding: 12px 16px;
+          background: transparent;
+          border: none;
+          color: rgba(255, 255, 255, 0.6);
+          cursor: pointer;
+          font-size: 0.95rem;
+          font-weight: 500;
+          transition: all 0.2s;
+          border-bottom: 2px solid transparent;
+        }
+
+        .wa-history-tab.active {
+          color: #fff;
+          border-bottom-color: #7c3aed;
+        }
+
+        .wa-history-tab:hover {
+          color: rgba(255, 255, 255, 0.8);
+        }
+
+        .wa-no-history {
+          text-align: center;
+          padding: 40px 20px;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .no-history-icon {
+          display: block;
+          font-size: 2.5rem;
+          margin-bottom: 10px;
+        }
+
+        .wa-history-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .wa-history-item-full {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          padding: 15px;
+          transition: all 0.2s;
+        }
+
+        .wa-history-item-full:hover {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(124, 58, 237, 0.3);
+        }
+
+        .wa-history-item-full.pending {
+          border-color: rgba(255, 193, 7, 0.3);
+          background: rgba(255, 193, 7, 0.05);
+        }
+
+        .wa-history-item-full.confirmed {
+          border-color: rgba(0, 255, 136, 0.3);
+          background: rgba(0, 255, 136, 0.05);
+        }
+
+        .wa-history-item-full.failed {
+          border-color: rgba(255, 77, 77, 0.3);
+          background: rgba(255, 77, 77, 0.05);
+        }
+
+        .history-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 10px;
+        }
+
+        .history-icon {
+          font-size: 1.8rem;
+        }
+
+        .history-info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .history-token {
+          color: #fff;
+          font-weight: 600;
+          font-size: 0.95rem;
+        }
+
+        .history-time {
+          color: rgba(255, 255, 255, 0.5);
+          font-size: 0.8rem;
+        }
+
+        .history-amount {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 4px;
+        }
+
+        .amount {
+          color: #fff;
+          font-weight: 600;
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .usd-value {
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 0.8rem;
+        }
+
+        .history-details {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 10px;
+          font-size: 0.8rem;
+        }
+
+        .status-badge {
+          padding: 4px 10px;
+          border-radius: 12px;
+          font-weight: 600;
+          background: rgba(255, 255, 255, 0.1);
+          color: rgba(255, 255, 255, 0.7);
+        }
+
+        .status-badge.pending {
+          background: rgba(255, 193, 7, 0.2);
+          color: #ffc107;
+        }
+
+        .status-badge.confirmed {
+          background: rgba(0, 255, 136, 0.2);
+          color: #00ff88;
+        }
+
+        .status-badge.failed {
+          background: rgba(255, 77, 77, 0.2);
+          color: #ff4d4d;
+        }
+
+        .history-hash {
+          color: rgba(255, 255, 255, 0.5);
+          font-family: 'JetBrains Mono', monospace;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
       `}</style>
     </div>
   )

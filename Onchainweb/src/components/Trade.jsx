@@ -1,120 +1,92 @@
+import { Link } from 'react-router-dom';
 
-import { useState, useCallback } from 'react';
-import CandlestickChart from './CandlestickChart';
-import { formatApiError } from '../lib/errorHandling';
-import { subscribeToTradeUpdates, saveTradeHistory } from '../lib/firebase';
-import Toast from './Toast.jsx';
-
-// ... constants
-
-export default function Trade({ isOpen, onClose }) {
-    const [currentUser] = useState(() => JSON.parse(localStorage.getItem('currentUser') || '{}'));
-    const [toast, setToast] = useState({ message: '', type: '' });
-
-    // Minimal state placeholders to satisfy usage in this component
-    const [tradeAmount, _setTradeAmount] = useState('');
-    const [selectedLevel, _setSelectedLevel] = useState({ profit: 80 });
-    const [activeTradeId, setActiveTradeId] = useState(null);
-    const [isTrading, setIsTrading] = useState(false);
-    const [tradeDirection, setTradeDirection] = useState(null);
-    const [entryPrice, setEntryPrice] = useState(null);
-    const [currentPrice, _setCurrentPrice] = useState(null);
-    const [_tradeResult, _setTradeResult] = useState(null);
-    const [forcedOutcome, setForcedOutcome] = useState(null);
-    const [selectedPair, _setSelectedPair] = useState({ symbol: 'BTC/USD' });
-
-    const showToast = (message, type = 'info') => {
-        setToast({ message, type });
-    };
-
-    // Quiet linter for intentionally-present imports and handlers
-    const _debugUnused_Trade = (ctx) => { if (typeof console !== 'undefined') console.debug('trade-unused', ctx); };
-    _debugUnused_Trade({ CandlestickChart, subscribeToTradeUpdates, saveTradeHistory, startTrade, handleTradeComplete, Toast });
-
-    // ... useEffect hooks
-
-    const startTrade = (direction) => {
-        try {
-            const amount = parseFloat(tradeAmount);
-            if (!selectedLevel || !amount || amount <= 0) {
-                showToast('Please enter a valid trade amount for the selected level.', 'error');
-                return;
-            }
-
-            // Assuming a balance check would happen here
-            // if (amount > currentUser.balance) {
-            //     showToast('Insufficient balance.', 'error');
-            //     return;
-            // }
-
-            const tradeId = 'trade_' + Date.now();
-            setActiveTradeId(tradeId);
-            setIsTrading(true);
-            setTradeDirection(direction);
-            setEntryPrice(currentPrice);
-            _setTradeResult(null);
-            showToast('Trade started! Good luck!', 'success');
-
-        } catch (error) {
-            showToast(formatApiError(error), 'error');
-        }
-    };
-
-    const handleTradeComplete = useCallback(async () => {
-        try {
-            if (!isTrading || entryPrice === null) return;
-
-            let result;
-            const finalPrice = currentPrice;
-
-            if (forcedOutcome) {
-                result = forcedOutcome === 'win';
-            } else {
-                if (tradeDirection === 'up') {
-                    result = finalPrice > entryPrice;
-                } else {
-                    result = finalPrice < entryPrice;
-                }
-            }
-
-            const profit = result ? (selectedLevel.profit / 100) * parseFloat(tradeAmount) : -parseFloat(tradeAmount);
-
-            const tradeRecord = {
-                userId: currentUser.id,
-                tradeId: activeTradeId,
-                pair: selectedPair.symbol,
-                amount: parseFloat(tradeAmount),
-                profit,
-                won: result,
-                entryPrice,
-                finalPrice,
-                timestamp: Date.now(),
-            };
-
-            await saveTradeHistory(tradeRecord);
-
-                _setTradeResult({ won: result, profit });
-            showToast(result ? `You won $${profit.toFixed(2)}!` : 'Trade lost.', result ? 'success' : 'error');
-
-        } catch (error) {
-            showToast(formatApiError(error), 'error');
-        } finally {
-            setIsTrading(false);
-            setActiveTradeId(null);
-            setForcedOutcome(null);
-            setEntryPrice(null);
-            setTradeDirection(null);
-        }
-    }, [isTrading, entryPrice, currentPrice, forcedOutcome, tradeDirection, selectedLevel, tradeAmount, activeTradeId, currentUser, selectedPair]);
-
-    if (!isOpen) return null;
-
+export default function Trade () {
     return (
-        <div className="trade-modal-overlay" onClick={onClose}>
-            <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: '' })} />
-            <div className="trade-modal" onClick={e => e.stopPropagation()}>
-                {/* ... rest of the component ... */}
-            </div>
+        <div className="trade-hub">
+            <header className="trade-hub-header">
+                <h1>Trade Center</h1>
+                <p>Open Binary Options or AI Arbitrage from here. The only tab-style navigation in the app stays in the bottom app bar.</p>
+            </header>
+
+            <section className="trade-hub-grid">
+                <article className="trade-hub-card">
+                    <h2>Binary Options</h2>
+                    <p>Admin-controlled trade levels using live market prices and live settlement checks.</p>
+                    <div className="trade-hub-links">
+                        <Link to="/trade/binary-options/new">Open Binary Options</Link>
+                        <Link to="/trade/binary-options/active">View Active Binary Trades</Link>
+                        <Link to="/trade/binary-options/history">View Binary History</Link>
+                    </div>
+                </article>
+
+                <article className="trade-hub-card">
+                    <h2>AI Arbitrage</h2>
+                    <p>Admin-controlled investment levels gated by real-time market momentum and live cycle tracking.</p>
+                    <div className="trade-hub-links">
+                        <Link to="/trade/ai-arbitrage/invest">Open AI Arbitrage</Link>
+                        <Link to="/trade/ai-arbitrage/active">View Active AI Cycles</Link>
+                        <Link to="/trade/ai-arbitrage/history">View AI History</Link>
+                    </div>
+                </article>
+            </section>
+
+            <style>{`
+        .trade-hub {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 24px;
+          color: #e8edf7;
+        }
+        .trade-hub-header h1 {
+          margin: 0 0 8px 0;
+        }
+        .trade-hub-header p {
+          margin: 0;
+          color: #9fb0c8;
+        }
+        .trade-hub-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 16px;
+          margin-top: 20px;
+        }
+        .trade-hub-card {
+          background: #0f1828;
+          border: 1px solid #2a3c5b;
+          border-radius: 12px;
+          padding: 16px;
+        }
+        .trade-hub-card h2 {
+          margin: 0 0 8px 0;
+        }
+        .trade-hub-card p {
+          margin: 0 0 12px 0;
+          color: #9fb0c8;
+        }
+        .trade-hub-links {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .trade-hub-links a {
+          text-decoration: none;
+          color: #cce7ff;
+          border: 1px solid #35517b;
+          background: #14233c;
+          border-radius: 8px;
+          padding: 10px;
+          font-weight: 600;
+        }
+        .trade-hub-links a:hover {
+          border-color: #3b82f6;
+          background: #193257;
+        }
+        @media (max-width: 900px) {
+          .trade-hub-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
         </div>
     );
 }

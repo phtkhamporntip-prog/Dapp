@@ -19,7 +19,6 @@
         "default": true,
         "mainThreadWebview-markdown.preview": true,
         "workbench.input.interactive": true,
-        "mssql.executionPlanView": true,
         "gitlens.rebase": true,
         "jsProfileVisualizer.heapsnapshot.table": true,
         "jsProfileVisualizer.heapprofile.table": true,
@@ -29,21 +28,21 @@
         "imagePreview.previewEditor": true,
         "workbench.editors.gettingStartedInput": true,
         "repl": true,
-        "sql-query-book": true,
-        "sql-book": true,
         "jupyter-notebook": true,
         "notebookOutputEditor": true,
         "workbench.editorinputs.searchEditorInput": true,
         "workbench.editor.chatSession": true,
-        "hexEditor.hexedit": true,
-        "workflowStudio.asl": true,
-        "phpprofiler.cachegrind": true,
         "copilot-chat-replay": true,
-        "ijnb-notebook": true,
-        "agentSessionsWelcomePage": true,
-        "workbench.editorinputs.browser": true,
-        "aws-redshift-sql-notebook": true,
-        "threatComposer.tc.json": true
+        "agentSessionsWelcomePage": true
     },
-    "workbench.editor.customLabels.enabled": true
+    "workbench.editor.customLabels.enabled": true,
+    "terminal.integrated.allowMnemonics": true,
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.allowChords": false,
+    "terminal.integrated.confirmOnKill": "never",
+    "python.testing.pytestArgs": [
+        "."
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }

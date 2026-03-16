@@ -114,6 +114,13 @@
 
 .nav-logo {
     margin-right: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nav-logo img {
+    object-fit: contain;
 }
 
 .nav-menu {
@@ -1343,20 +1350,20 @@
    Logo Utility Classes (used across admin components)
    ============================================ */
 .admin-logo-sm {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     vertical-align: middle;
 }
 
 .admin-logo-md {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
     display: inline-block;
 }
 
 .admin-logo-lg {
-    width: 64px;
-    height: 64px;
+    width: 84px;
+    height: 84px;
     display: block;
     margin: 0 auto;
 }
@@ -1390,14 +1397,17 @@
 .nav-logo-brand {
     font-weight: 700;
     color: #1e293b;
-    margin-left: 8px;
+    margin-left: 0;
     vertical-align: middle;
+    font-size: 18px;
+    line-height: 1;
 }
 
 .nav-section-label {
     color: #7c3aed;
     font-weight: 600;
 }
+
 /* Dashboard Content Sections */
 .dashboard-content {
     padding: 20px;
@@ -1412,6 +1422,215 @@
     margin-bottom: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     border: 1px solid #e2e8f0;
+}
+
+.trading-controls-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.trading-control-card {
+    border: 1px solid #dbe3f1;
+    border-radius: 12px;
+    padding: 16px;
+    background: #f8fafc;
+}
+
+.control-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.control-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.control-field span {
+    font-size: 14px;
+    color: #475569;
+    font-weight: 600;
+}
+
+.control-field input,
+.control-field textarea {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #0f172a;
+    font-family: inherit;
+}
+
+.control-field textarea {
+    min-height: 220px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    resize: vertical;
+}
+
+.trading-controls-save {
+    margin-top: 16px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: 1px solid #7c3aed;
+    background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* Level editor */
+.control-level-editor {
+    margin-top: 12px;
+}
+
+.level-editor-heading {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.level-table-scroll {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 10px;
+}
+
+.level-editor-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 560px;
+    font-size: 13px;
+}
+
+.level-editor-table thead tr {
+    background: #f0f4f8;
+}
+
+.level-editor-table th {
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.level-editor-row td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.level-editor-row:last-child td {
+    border-bottom: none;
+}
+
+.level-cell-input {
+    width: 100%;
+    min-width: 64px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #0f172a;
+    font-size: 13px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.level-cell-input:focus {
+    outline: none;
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+
+.level-delete-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    line-height: 1;
+}
+
+.level-delete-btn:hover {
+    background: #fee2e2;
+}
+
+.level-add-btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px dashed #7c3aed;
+    background: transparent;
+    color: #7c3aed;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.level-add-btn:hover {
+    background: rgba(124, 58, 237, 0.07);
+}
+
+/* Force outcome controls in trades table */
+.force-outcome-btns {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.force-win-btn,
+.force-loss-btn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1.4;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+}
+
+.force-win-btn {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.force-win-btn:hover {
+    background: #bbf7d0;
+}
+
+.force-loss-btn {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.force-loss-btn:hover {
+    background: #fecaca;
+}
+
+.force-settled-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.03em;
 }
 
 .dashboard-section h2 {
