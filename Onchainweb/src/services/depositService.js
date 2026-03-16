@@ -1,6 +1,6 @@
 
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '../lib/firebase.js';
 import { isFirebaseReady } from '../utils/firebaseHelpers';
 
 // Pre-defined, secure deposit addresses for supported networks

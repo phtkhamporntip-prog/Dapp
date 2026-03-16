@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { formatApiError } from '../lib/errorHandling';
-import { firebaseSignIn, firebaseSignOut, subscribeToUsers, subscribeToDeposits, isFirebaseEnabled, onAuthStateChanged, auth } from '../lib/firebase';
+import { firebaseSignIn, firebaseSignOut, subscribeToUsers, subscribeToDeposits, isFirebaseEnabled, onAuthStateChanged, auth } from '../lib/firebase.js';
 import { updateUserKYC, processDeposit } from '../services/adminService';
-import { handleAdminLogin } from '../lib/adminAuth';
+import { handleAdminLogin } from '../lib/adminAuth.js';
 import Toast from './Toast.jsx';
 
 export default function AdminPanel({ isOpen = true, onClose }) {

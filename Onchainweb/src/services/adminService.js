@@ -1,6 +1,6 @@
 
 import { doc, updateDoc, runTransaction, setDoc, serverTimestamp, collection, getDocs, query, where, limit, onSnapshot, deleteDoc } from 'firebase/firestore';
-import { db, auth } from '../lib/firebase';
+import { db, auth } from '../lib/firebase.js';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { formatApiError } from '../lib/errorHandling';
 import { isFirebaseReady } from '../utils/firebaseHelpers';

@@ -1,4 +1,4 @@
-import { isFirebaseAvailable } from '../lib/firebase';
+import { isFirebaseAvailable } from '../lib/firebase.js';
 
 /**
  * Helper function to safely check if Firebase is available

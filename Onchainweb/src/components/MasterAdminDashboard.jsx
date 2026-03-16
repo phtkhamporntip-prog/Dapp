@@ -5,7 +5,6 @@ import {
     subscribeToActiveChats,
     saveAdminReply,
     updateActiveChat,
-    isFirebaseEnabled,
     subscribeToUsers,
     subscribeToDeposits,
     subscribeToWithdrawals,
@@ -13,10 +12,10 @@ import {
     subscribeToAiArbitrageInvestments,
     firebaseSignIn,
     firebaseSignOut,
-    auth, // Ensure auth is imported for onAuthStateChanged
+    auth,
     setForcedBinaryOutcome,
 } from '../lib/firebase.js';
-import { formatApiError, validatePassword } from '../lib/errorHandling.js';
+import { formatApiError } from '../lib/errorHandling.js';
 import { handleAdminLogin, formatFirebaseAuthError } from '../lib/adminAuth.js';
 import { createAdminAccount, subscribeToAdmins, updateAdminAccount, deleteAdminAccount } from '../services/adminService.js';
 import Toast from './Toast.jsx';
@@ -69,26 +68,51 @@ export default function MasterAdminDashboard () {
 
     // Authentication state listener
     useEffect( () => {
+        const SESSION_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+        const restoreFromLocalSession = () => {
+            const session = JSON.parse( localStorage.getItem( 'masterAdminSession' ) || 'null' );
+            const sessionAge = session ? Date.now() - ( session.timestamp || 0 ) : Infinity;
+            if ( session?.role === 'master' && sessionAge < SESSION_TTL ) {
+                setIsAuthenticated( true );
+                setIsMasterAccount( true );
+            } else {
+                if ( session && sessionAge >= SESSION_TTL ) {
+                    localStorage.removeItem( 'masterAdminSession' );
+                }
+                setIsAuthenticated( false );
+                setIsMasterAccount( false );
+            }
+            setIsLoading( false );
+        };
+
+        // If Firebase auth is not configured, fall back to localStorage session check only
+        if ( !auth ) {
+            restoreFromLocalSession();
+            return;
+        }
+
         const unsubscribe = onAuthStateChanged( auth, ( user ) => {
             if ( user ) {
                 setIsAuthenticated( true );
-                const session = JSON.parse( localStorage.getItem( 'masterAdminSession' ) );
+                const session = JSON.parse( localStorage.getItem( 'masterAdminSession' ) || 'null' );
                 if ( session ) {
                     setIsMasterAccount( session.role === 'master' );
                 }
             } else {
-                setIsAuthenticated( false );
-                setIsMasterAccount( false );
+                // No Firebase user — check for a valid master account session (env-var login)
+                restoreFromLocalSession();
+                return;
             }
             setIsLoading( false );
         } );
         return () => unsubscribe();
     }, [] );
 
-    // Real-time data subscriptions
+    // Real-time data subscriptions (subscriptions handle Firebase/localStorage fallback internally)
     useEffect( () => {
-        if ( !isAuthenticated || !isFirebaseEnabled() ) {
-            return; // Don't subscribe if not authenticated or Firebase is unavailable
+        if ( !isAuthenticated ) {
+            return;
         }
 
         // Setup all subscriptions and store their unsubscribe functions
@@ -139,10 +163,8 @@ export default function MasterAdminDashboard () {
         if ( !loginData.username || !loginData.password ) {
             return showToast( 'Please enter username and password', 'error' );
         }
-        const passwordValidation = validatePassword( loginData.password, 8 );
-        if ( !passwordValidation.valid ) {
-            return showToast( passwordValidation.error, 'error' );
-        }
+        // Note: password complexity is not validated here — admin passwords are managed
+        // server-side (Firebase Auth or VITE_MASTER_ADMIN_PASSWORD env var).
         setIsLoggingIn( true );
         try {
             const result = await handleAdminLogin( loginData.username, loginData.password, firebaseSignIn );
@@ -160,9 +182,12 @@ export default function MasterAdminDashboard () {
     const handleLogout = async () => {
         try {
             await firebaseSignOut();
+        } catch {
+            // Ignore: master account may not have a Firebase auth session
+        } finally {
             localStorage.removeItem( 'masterAdminSession' );
-        } catch ( err ) {
-            showToast( formatApiError( err ), 'error' );
+            setIsAuthenticated( false );
+            setIsMasterAccount( false );
         }
     };
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import MasterAccountSetup from './MasterAccountSetup.jsx';
 import AdminLogin from './AdminLogin.jsx';
 import { getAdminByEmail, hasMasterAccount } from '../services/adminService.js';
-import { onAuthStateChanged } from '../lib/firebase.js';
+import { onAuthStateChanged, auth } from '../lib/firebase.js';
 import { getAllowedAdminEmails } from '../lib/adminAuth.js';
 import { logger } from '../utils/logger.js';
 
@@ -48,7 +48,7 @@ export default function AdminRouteGuard({
       }
 
       // Set up auth state listener (synchronous, returns unsubscribe immediately)
-      unsubscribe = onAuthStateChanged(async (user) => {
+      unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
           // User is signed in, verify they're an admin
           try {

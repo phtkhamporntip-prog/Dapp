@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import CandlestickChart from './CandlestickChart';
-import { isFirebaseAvailable, getUser, saveUser, subscribeToFuturesPositions, saveFuturesPosition, closeFuturesPosition, subscribeToFuturesHistory } from '../lib/firebase';
+import { isFirebaseAvailable, getUser, saveUser, subscribeToFuturesPositions, saveFuturesPosition, closeFuturesPosition, subscribeToFuturesHistory } from '../lib/firebase.js';
 import { formatApiError } from '../lib/errorHandling';
 
 // ...

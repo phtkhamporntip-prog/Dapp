@@ -37,6 +37,15 @@
 			"problemMatcher": [],
 			"label": "npm: build",
 			"detail": "cd Onchainweb && npm install && npm run build"
+		},
+		{
+			"type": "npm",
+			"script": "build",
+			"path": "Onchainweb",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build - Onchainweb",
+			"detail": "vite build"
 		}
 	]
 }

@@ -12,7 +12,6 @@ import AIArbitrage from './components/AIArbitrage';
 import BottomNav from './components/BottomNav';
 import NotFound from './components/NotFound';
 import ErrorBoundary from './components/ErrorBoundary';
-import MasterAdminDashboard from './components/MasterAdminDashboard';
 
 function App () {
   return (
@@ -26,7 +25,6 @@ function App () {
             <Route path="/trade/binary-options/*" element={<BinaryOptions />} />
             <Route path="/trade/ai-arbitrage/*" element={<AIArbitrage />} />
             <Route path="/wallet" element={<Wallet isOpen />} />
-            <Route path="/admin" element={<MasterAdminDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

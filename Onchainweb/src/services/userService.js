@@ -1,6 +1,6 @@
 
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db, auth } from '../lib/firebase';
+import { db, auth } from '../lib/firebase.js';
 import { isFirebaseReady } from '../utils/firebaseHelpers';
 
 /**
