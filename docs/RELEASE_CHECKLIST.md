@@ -1,393 +1,210 @@
 # 🎉 Public Release Checklist
 
-Final checklist for making Snipe publicly available.
+Final checklist for making OnchainWeb publicly available.
+
+> **Stack**: React 18 + Vite (frontend) · Firebase Auth/Firestore/Hosting (backend) · Cloudflare Workers/Pages (optional CDN/API layer)
 
 ---
 
-## ✅ Completed Tasks
-
-### Documentation
-
-- [x] Root README.md updated with user-facing features only
-- [x] Backend README.md documents public API endpoints
-- [x] Frontend README.md describes features and setup
-- [x] DEPLOYMENT.md provides deployment instructions
-- [x] MAINTENANCE.md created with operational procedures
-- [x] BACKUP_RECOVERY.md created with database backup guides
-- [x] ADMIN_ONLY.md created (gitignored, not public)
-- [x] Wallet connection system documented in README
-- [x] Admin management system documented in README
-
-### Security
-
-- [x] Added ADMIN_ONLY.md to .gitignore
-- [x] Removed admin/master references from public docs
-- [x] Created security audit workflow
-- [x] Documented credential rotation procedures
-- [x] CORS configured with specific allowed origins (not wildcard)
-- [x] Removed hardcoded credentials from DEPLOYMENT.md
-- [x] Removed fallback credentials from frontend code
-- [x] Backend now requires environment variables (no insecure defaults)
-- [x] seed.js uses environment variables for admin passwords
-- [x] LICENSE updated with correct copyright year and owner
-- [x] DEPLOYMENT_STATUS.md added to .gitignore
-
-### Automation
-
-- [x] Created health check workflow (runs every 6 hours)
-- [x] Created security audit workflow (runs weekly)
-- [x] Created backup scripts (backup-db.sh, restore-db.sh)
-- [x] Set up GitHub Actions for CI/CD
-
-### Code Quality
-
-- [x] Backend tested and running live
-- [x] Frontend tested and deployed
-- [x] Live chat functionality verified
-- [x] Master/admin login tested
-- [x] Database seed script created and tested
-- [x] Error boundary added for crash recovery
-- [x] API status banner for connection feedback
-- [x] User pagination implemented (50 per page, max 100)
-- [x] API retry logic for cold starts
-
----
-
-## 🛠️ Troubleshooting Guide
-
-### Common Issues Summary
-
-| Cause | Prevention/Fix |
-| ------- | ---------------- |
-| Backend/API cold start | Paid hosting or keep-alive service |
-| Bad DB connection | Whitelist IPs, monitor, optimize queries |
-| Wrong API URL | Set and test frontend `.env` |
-| CORS/network errors | Correct backend CORS, use valid domains |
-| Heavy data loads | Paginate, lazy load in dashboard |
-| Unseeded master/admin | Confirm DB seed/init for admin users |
-| Missing error messages | Add user feedback in frontend |
-| JWT/session issues | Always use fresh login token |
-
-### Detailed Troubleshooting
-
-#### 1. Backend/API Issues
-
-**Symptoms**: Slow first load, timeouts, connection errors
-
-**Fixes**:
-
-- Use paid hosting plan to avoid cold starts (Render free tier sleeps)
-- Check MongoDB Atlas is whitelisted and healthy
-- Test `/api/health` endpoint - expect `{"status":"ok","mongoConnected":true}`
-- Check backend logs on Render for errors
-
-#### 2. Frontend Configuration
-
-**Symptoms**: API calls fail, wrong server
-
-**Fixes**:
-
-- Verify `VITE_API_BASE_URL` in `.env` points to live backend
-- Rebuild and redeploy frontend after changing `.env`
-- Use pagination and lazy loading for dashboard data
-
-#### 3. CORS and Networking
-
-**Symptoms**: Browser console shows CORS errors
-
-**Fixes**:
-
-- Backend must allow your frontend domain (not just `*`)
-- Check server firewalls and DNS resolution
-- Verify SSL certificates are valid
-
-#### 4. Authentication Issues
-
-**Symptoms**: Login fails, stuck loading, invalid token
-
-**Fixes**:
-
-- Confirm database seed ran and master/admin accounts exist
-- Clear localStorage and try fresh login
-- Check JWT token hasn't expired
-- Avoid multiple logins in different tabs
-
-#### 5. Browser Tips
-
-- Hard refresh: `Ctrl+Shift+R` (Windows) or `Cmd+Shift+R` (Mac)
-- Clear site data: DevTools → Application → Clear Storage
-- Check console for errors: `F12` → Console tab
-
----
-
-## 🔲 Manual Tasks Required
-
-### 1. Make Repository Public
-
-**Status**: ⚠️ Requires Manual Action
-
-**Steps**:
-
-1. Go to: <https://github.com/ddefi0175-netizen/Snipe/settings>
-2. Scroll to "Danger Zone"
-3. Click "Change repository visibility"
-4. Select "Make public"
-5. Confirm the action
-
-### 2. Verify Live Deployments
-
-**Status**: ⚠️ Needs Verification
-
-Check that these URLs are accessible:
-
-- [ ] Frontend: <https://snipe-frontend.vercel.app> (or your actual URL)
-- [ ] Backend: <https://snipe-backend.onrender.com> (or your actual URL)
-
-Update README.md with actual live URLs if different.
-
-### 3. Configure GitHub Repository Settings
-
-**Enable Issues**:
-
-1. Go to Settings → Features
-2. Check "Issues"
-3. Configure issue templates (optional)
-
-**Enable Discussions** (Optional):
-
-1. Go to Settings → Features
-2. Check "Discussions"
-
-**Set Repository Topics**:
-
-1. Go to repository main page
-2. Click "Add topics"
-3. Suggested: `trading`, `blockchain`, `react`, `nodejs`, `mongodb`, `cryptocurrency`
-
-**Add Repository Description**:
-
-- Short description: "Real-time trading platform with live chat and wallet integration"
-
-### 4. Create GitHub Release
-
-**Steps**:
-
-1. Go to: <https://github.com/ddefi0175-netizen/Snipe/releases/new>
-2. Click "Create a new release"
-3. Tag version: `v1.0.0`
-4. Release title: `v1.0.0 - Initial Public Release`
-5. Description:
-
-   ```markdown
-   # Snipe v1.0.0 - Initial Public Release
-
-   ## Features
-   - Real-time cryptocurrency price feeds
-   - User dashboard with points and activity tracking
-   - Live chat functionality
-   - Web3 wallet integration
-   - Admin/master control panel
-   - Accessible, responsive UI
-
-   ## Live Demo
-   - Frontend: [Live Demo](https://your-frontend-url)
-   - API Documentation: See [README](https://github.com/ddefi0175-netizen/Snipe)
-
-   ## Quick Start
-   ## Quick Start
-   See [README.md](https://github.com/ddefi0175-netizen/Snipe#quick-start)
-   for installation instructions.
-
-   ## Tech Stack
-   - Frontend: React + Vite
-   - Backend: Node.js + Express
-   - Database: MongoDB
-   - Deployment: Vercel + Render
-
-6. Click "Publish release"
-
-### 5. Set Up Monitoring Secrets
-
-Add these secrets to GitHub repository for health checks:
-
-1. Go to: Settings → Secrets and variables → Actions
-2. Add:
-   - `BACKEND_URL`: Your actual backend URL
-   - `FRONTEND_URL`: Your actual frontend URL
-
-### 6. Final Testing
-
-Run the automated test script:
+## ✅ Pre-Launch Checklist
+
+### 1. Environment & Secrets
+
+- [ ] Copy `Onchainweb/.env.example` → `Onchainweb/.env` and fill in all values
+- [ ] Configure GitHub repository secrets (Settings → Secrets and variables → Actions):
+
+  **Required for CI build:**
+  | Secret | Description |
+  |--------|-------------|
+  | `VITE_FIREBASE_API_KEY` | Firebase Web API key |
+  | `VITE_FIREBASE_AUTH_DOMAIN` | Firebase Auth domain |
+  | `VITE_FIREBASE_PROJECT_ID` | Firebase project ID |
+  | `VITE_FIREBASE_STORAGE_BUCKET` | Firebase Storage bucket |
+  | `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase Messaging sender ID |
+  | `VITE_FIREBASE_APP_ID` | Firebase App ID |
+  | `VITE_FIREBASE_MEASUREMENT_ID` | Firebase Measurement ID (optional) |
+  | `VITE_WALLETCONNECT_PROJECT_ID` | WalletConnect Cloud project ID |
+
+  **Required for Firebase Hosting deploy:**
+  | Secret | Description |
+  |--------|-------------|
+  | `FIREBASE_SERVICE_ACCOUNT` | JSON service account key (recommended) |
+  | `FIREBASE_TOKEN` | CI token from `firebase login:ci` (alternative) |
+
+  **Optional repository variable:**
+  | Variable | Description |
+  |----------|-------------|
+  | `FIREBASE_PROJECT_ID` | Firebase project ID (used in deploy workflow) |
+
+  **Required for Cloudflare deploy (optional):**
+  | Secret | Description |
+  |--------|-------------|
+  | `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Pages/Workers permissions |
+
+### 2. Firebase Console Setup
+
+- [ ] Create Firebase project at https://console.firebase.google.com
+- [ ] Enable **Authentication** (Email/Password provider)
+- [ ] Enable **Firestore Database** (start in production mode)
+- [ ] Enable **Realtime Database** (if using chat)
+- [ ] Enable **Hosting**
+- [ ] Deploy Firestore rules: `firebase deploy --only firestore:rules`
+- [ ] Deploy Firestore indexes: `firebase deploy --only firestore:indexes`
+- [ ] Deploy Database rules: `firebase deploy --only database`
+- [ ] Create admin accounts in Firebase Auth (email format: `username@admin.onchainweb.app`)
+- [ ] Add admin emails to `VITE_ADMIN_ALLOWLIST` in your environment
+
+### 3. Build & Deploy
+
+- [ ] Verify `npm run build` succeeds locally: `cd Onchainweb && npm run build`
+- [ ] Output is in `Onchainweb/dist/` ← matches `firebase.json` `"public"` setting
+- [ ] CI workflow passes on the `main` branch
+- [ ] Firebase deploy workflow succeeds
+- [ ] Site is live at your Firebase Hosting URL
+
+### 4. Repository Settings
+
+- [ ] Make repository public (Settings → Danger Zone → Change visibility)
+- [ ] Enable Issues (Settings → Features → Issues)
+- [ ] Add repository description and topics (`web3`, `react`, `firebase`, `defi`, `trading`)
+- [ ] Verify no `.env` files or secrets are committed (`.gitignore` covers them)
+
+### 5. Create GitHub Release
+
+Run the release workflow by pushing a version tag:
 
 ```bash
-cd /workspaces/Snipe
-./test-deployment.sh
+git tag v1.0.0
+git push origin v1.0.0
+```
 
-Verify:
-
-- [ ] Backend health check passes
-- [ ] Backend API endpoints respond
-- [ ] Frontend loads correctly
-- [ ] Master login works
-- [ ] Chat functionality works
-- [ ] Wallet connection works
+The `.github/workflows/release.yml` workflow will:
+1. Build the production bundle
+2. Create a GitHub Release with release notes
+3. Attach the `dist` archive as a release asset
 
 ---
 
-## 📢 Announcement Plan
+## 🚀 Setup Guide
 
-### Where to Announce
+### Local Development
 
-1. **Social Media**:
-   - Twitter/X
-   - LinkedIn
-   - Reddit (r/webdev, r/reactjs, r/node)
-   - Discord communities
+```bash
+# 1. Clone the repository
+git clone https://github.com/<your-org>/<your-repo>.git
+cd Dapp
 
-2. **Developer Communities**:
-   - Dev.to
-   - Hashnode
-   - Medium
-   - Hacker News (Show HN)
+# 2. Install dependencies
+npm install                  # root (firebase-tools devDependency)
+cd Onchainweb && npm install # frontend
 
-3. **Product Hunt** (Optional):
-   - Submit as new product
-   - Prepare screenshots and demo video
+# 3. Set up environment
+cp Onchainweb/.env.example Onchainweb/.env
+# Edit Onchainweb/.env and fill in your Firebase and WalletConnect credentials
 
-### Announcement Template
+# 4. Start development server
+npm run dev                  # from repo root, starts Vite at http://localhost:5173
 
-```text
-🚀 Excited to announce Snipe v1.0.0 - Open Source Trading Platform!
+# 5. (Optional) Start Firebase emulators
+npm run emulators            # from repo root, starts emulator UI at http://localhost:4000
+```
 
-Snipe is a modern, accessible trading platform built with:
-✨ Real-time price feeds
-💬 Live chat
-🔗 Web3 wallet integration
-📊 User dashboards
-♿ Accessibility-first design
+### Codespaces / Dev Container
 
-Built with React, Node.js, and MongoDB.
-Fully open source and ready to deploy!
+1. Open the repository in GitHub Codespaces
+2. `postCreateCommand` will automatically install all dependencies
+3. VS Code will auto-start the Vite dev server (background task) when the workspace opens
+4. To start Firebase emulators manually, open a terminal and run:
+   ```bash
+   cd /workspaces/<your-repo-name>
+   npm run emulators
+   ```
+5. Forwarded ports:
+   - `5173` → Vite dev server (auto-opened in preview)
+   - `4000` → Firebase Emulator UI
+   - `8080` → Firestore emulator
+   - `9099` → Auth emulator
 
-🔗 GitHub: https://github.com/ddefi0175-netizen/Snipe
-🌐 Live Demo: [your-demo-url]
+### Production Build
 
-Contributions welcome! ⭐
+```bash
+cd Onchainweb
+npm run build:production     # outputs to Onchainweb/dist/
+```
 
----
+### Deploy
 
-## �� Post-Launch Monitoring
+**Firebase Hosting** (primary):
+```bash
+firebase deploy --only hosting
+```
 
-### First 24 Hours
+**Cloudflare Pages** (optional CDN):
+```bash
+cd Onchainweb && npm run deploy:cloudflare
+```
 
-Monitor:
-
-- [ ] GitHub stars/forks/issues
-- [ ] Live site uptime and response times
-- [ ] Error logs in backend/frontend
-- [ ] Database performance in MongoDB Atlas
-- [ ] GitHub Actions workflow runs
-
-### First Week
-
-- [ ] Respond to GitHub issues within 48 hours
-- [ ] Review and merge community PRs
-- [ ] Update documentation based on user feedback
-- [ ] Fix any critical bugs reported
-- [ ] Monitor health check results
-
-### Ongoing
-
-Follow the maintenance schedule in MAINTENANCE.md:
-
-- Weekly: Dashboard testing, log review, security audit
-- Monthly: Dependency updates, performance review
-- Quarterly: Backup testing, credential rotation
+**Cloudflare Workers** (optional API layer):
+```bash
+wrangler deploy              # from repo root
+```
 
 ---
 
-## 📝 Next Improvements
+## 🔐 Secrets Reference
 
-Consider for future releases:
+Never commit secrets. Use these methods:
 
-**Documentation**:
+- **Local dev**: `Onchainweb/.env` (gitignored)
+- **CI/CD**: GitHub repository secrets
+- **Cloudflare Workers**: `wrangler secret put <NAME>`
+- **Firebase**: Firebase Console → Project Settings → Service Accounts
 
-- [ ] Add architecture diagrams
-- [ ] Create video tutorials
-- [ ] Add API documentation (Swagger/OpenAPI)
-- [ ] Write contributing guidelines
+### Generating FIREBASE_SERVICE_ACCOUNT
 
-**Features**:
+1. Go to [Firebase Console](https://console.firebase.google.com) → Project Settings → Service Accounts
+2. Click "Generate new private key"
+3. Download the JSON file
+4. Add the **entire JSON content** as the `FIREBASE_SERVICE_ACCOUNT` secret in GitHub
 
-- [ ] Add email notifications
-- [ ] Implement 2FA for admin accounts
-- [ ] Add more wallet connectors (WalletConnect)
-- [ ] Internationalization (i18n)
-- [ ] Dark mode
+### Generating FIREBASE_TOKEN (alternative)
 
-**DevOps**:
-
-- [ ] Add integration tests
-- [ ] Set up staging environment
-- [ ] Add performance monitoring (New Relic, Datadog)
-- [ ] Set up error tracking (Sentry)
-
-**Community**:
-
-- [ ] Create Discord server
-- [ ] Start a changelog/blog
-- [ ] Add code of conduct
-- [ ] Create issue templates
+```bash
+npm install -g firebase-tools
+firebase login:ci
+# Copy the token output and add as FIREBASE_TOKEN secret
+```
 
 ---
 
-## 🎯 Success Metrics
+## 🛠️ Troubleshooting
 
-Track these metrics to measure success:
+### Build fails (no env vars)
+The build works without env vars — Firebase will be disabled and the app falls back to `localStorage`. For production, set all `VITE_FIREBASE_*` secrets.
 
-**Repository**:
+### Firebase deploy skipped in CI
+Add `FIREBASE_SERVICE_ACCOUNT` or `FIREBASE_TOKEN` to repository secrets. See the section above.
 
-- Stars on GitHub
-- Forks and clones
-- Issues opened/closed
-- Pull requests received
+### Codespaces disconnects on start
+The dev container uses VS Code Tasks for auto-start instead of a blocking `postStartCommand`. If the Vite task does not auto-start, run `npm run dev` in the terminal.
 
-**Platform**:
+### Admin login not working
+1. Create user in Firebase Console → Authentication → Users
+2. Use email format: `username@admin.onchainweb.app`
+3. Set `VITE_ADMIN_ALLOWLIST=your-email@admin.onchainweb.app` in `.env`
+4. Set `VITE_ENABLE_ADMIN=true`
 
-- Daily active users
-- Chat messages sent
-- Wallet connections
-- API requests per day
-
-**Community**:
-
-- Contributors
-- Community discussions
-- Social media mentions
+### Emulators not starting
+Ensure root dependencies are installed: `npm install` from repo root (installs `firebase-tools`). Then: `npm run emulators`
 
 ---
 
-## ✅ Final Pre-Launch Checklist
+## 📋 Post-Launch Monitoring
 
-Before announcing publicly:
-
-- [ ] Repository is public on GitHub
-- [ ] README.md has live demo links
-- [ ] All documentation is up to date
-- [ ] GitHub release v1.0.0 is published
-- [ ] Health checks are running successfully
-- [ ] Live deployments are tested and working
-- [ ] GitHub Issues are enabled
-- [ ] Repository topics and description are set
-- [ ] ADMIN_ONLY.md is in .gitignore (not public)
-- [ ] Announcement post is prepared
-- [ ] Social media accounts are ready
+- Health checks run every 6 hours via `.github/workflows/health-check.yml`
+- Security audit runs weekly via `.github/workflows/security-audit.yml`
+- Set `FRONTEND_URL` and `BACKEND_URL` secrets to enable URL monitoring
 
 ---
 
-**Ready to Launch?** ✅
-
-Once all manual tasks are complete, you're ready to announce Snipe
-to the world! 🎉
-
-Good luck with your public release! 🚀
+**Ready to Launch?** ✅ Complete all items above and push a `v*` tag to trigger the release workflow.

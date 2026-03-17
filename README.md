@@ -16,51 +16,52 @@ For more detailed instructions, please refer to the `QUICK_START_GUIDE.md` docum
 
 ## Codespaces / Dev Container
 
-The dev container installs dependencies automatically on creation but **does not auto-start the dev server** to keep the Codespace stable and prevent automatic disconnects.
+The dev container installs all dependencies automatically on creation. The Vite dev server auto-starts as a background VS Code task when the workspace opens, so you do not need to run any command manually after the Codespace loads.
 
-After the Codespace is ready, open a terminal and start services manually:
+**Forwarded ports:**
+- `5173` → Vite dev server (auto-opened in preview)
+- `4173` → Vite preview server
+- `4000` → Firebase Emulator UI
+- `8080` → Firestore emulator
+- `9099` → Auth emulator
 
+**To start Firebase emulators** (optional — open a new terminal):
 ```bash
-# Start the Vite frontend dev server (from the Onchainweb workspace folder)
-npm run dev
-
-# Start Firebase emulators for local backend/admin control
-# Run from repo root (cd /workspaces/Dapp if needed)
 cd /workspaces/Dapp
 npm run emulators
 ```
 
-- Vite dev server → http://localhost:5173
-- Firebase Emulator UI → http://localhost:4000
-- Production build (unchanged): `npm run build`
+Or use the VS Code task **"Dev: start frontend + emulators"** to launch both in parallel.
 
 ## CI/CD & Deployment
 
 ### GitHub Actions Secrets
 
-This repository uses GitHub Actions for continuous integration and deployment. To enable CI/CD workflows, you need to configure several secrets:
+This repository uses GitHub Actions for continuous integration and deployment. To enable CI/CD workflows, configure the following secrets in **Settings → Secrets and variables → Actions**:
 
-- **Required for Cloudflare Deployment**: See `SECRETS.md` for detailed setup instructions
-- **Required for Firebase Build**: All Firebase configuration variables
-- **Optional for Health Monitoring**: BACKEND_URL and FRONTEND_URL
+| Secret | Required | Description |
+|--------|----------|-------------|
+|  | CI build | Firebase Web API key |
+|  | CI build | Firebase Auth domain |
+|  | CI build | Firebase project ID |
+|  | CI build | Firebase Storage bucket |
+|  | CI build | Firebase Messaging sender ID |
+|  | CI build | Firebase App ID |
+|  | CI build | Firebase Measurement ID |
+|  | CI build | WalletConnect Cloud project ID |
+|  | Firebase deploy | JSON service account key |
+|  | Firebase deploy | Alternative:  token |
+|  | Cloudflare deploy | Optional: Cloudflare API token |
 
-📚 **Complete Setup Guide**: See [SECRETS.md](SECRETS.md) for step-by-step instructions on configuring all required GitHub secrets.
+📚 **Complete Setup Guide**: See [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) for step-by-step instructions.
 
 ### Available Workflows
 
-- **CI** (`.github/workflows/ci.yml`): Runs on every push and PR to main
-  - Builds frontend
-  - Runs tests and linting
-  - Executes smoke tests
-
-- **Cloudflare Deploy** (`.github/workflows/cloudflare-deploy.yml`): Deploys to production
-  - Deploys Cloudflare Workers
-  - Deploys Cloudflare Pages
-  - Requires: CLOUDFLARE_API_TOKEN and all Firebase secrets
-
-- **Health Check** (`.github/workflows/health-check.yml`): Monitors production
-  - Runs every 6 hours
-  - Optional: Configure BACKEND_URL and FRONTEND_URL
+- **CI** (): Runs on every push and PR to main — builds, lints, tests, smoke-tests
+- **Firebase Deploy** (): Deploys to Firebase Hosting on push to 
+- **Cloudflare Deploy** (): Deploys Workers + Pages (requires )
+- **Release** (): Creates a GitHub Release when a  tag is pushed
+- **Health Check** (): Monitors production URLs every 6 hours
 
 ## AI Development Assistant
 

@@ -7,12 +7,16 @@
     }
   },
   "workspaceFolder": "/workspaces/Dapp/Onchainweb",
-  "postCreateCommand": "if [ -f package-lock.json ]; then npm ci; else npm install; fi",
-  "forwardPorts": [5173, 4173, 4000],
+  "postCreateCommand": "cd /workspaces/Dapp && npm install && cd Onchainweb && npm install",
+  "forwardPorts": [5173, 4173, 4000, 5000, 5001, 8080, 9099],
   "portsAttributes": {
     "5173": { "label": "Vite dev server", "onAutoForward": "openPreview" },
     "4173": { "label": "Vite preview", "onAutoForward": "openPreview" },
-    "4000": { "label": "Firebase Emulator UI", "onAutoForward": "notify" }
+    "4000": { "label": "Firebase Emulator UI", "onAutoForward": "notify" },
+    "5000": { "label": "Firebase Hosting emulator", "onAutoForward": "silent" },
+    "5001": { "label": "Firebase Functions emulator", "onAutoForward": "silent" },
+    "8080": { "label": "Firestore emulator", "onAutoForward": "silent" },
+    "9099": { "label": "Auth emulator", "onAutoForward": "silent" }
   },
   "customizations": {
     "vscode": {
@@ -20,7 +24,10 @@
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "farooque-dev.firebase-project-manager"
-      ]
+      ],
+      "settings": {
+        "task.allowAutomaticTasks": "on"
+      }
     }
   }
 }
