@@ -1,41 +1,15 @@
-<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="logoTitle logoDesc">
+  <title id="logoTitle">Snipe logo</title>
+  <desc id="logoDesc">A blue rounded hexagon with an abstract white S mark.</desc>
   <defs>
-    <linearGradient id="brand-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stopColor="#002D72" />
-      <stop offset="50%" stopColor="#0052CC" />
-      <stop offset="100%" stopColor="#00C2FF" />
+    <linearGradient id="snipeGradient" x1="20" y1="14" x2="108" y2="114" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0A2A66" />
+      <stop offset="0.55" stop-color="#0E6DFF" />
+      <stop offset="1" stop-color="#1DD3FF" />
     </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-      <feMerge>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
   </defs>
-  
-  <!-- Outer hexagon -->
-  <polygon 
-    points="50,2 93,25 93,75 50,98 7,75 7,25" 
-    fill="url(#brand-gradient)"
-    stroke="none"
-    filter="url(#glow)"
-  />
-  
-  <!-- Inner geometric pattern -->
-  <polygon 
-    points="50,15 78,32 78,68 50,85 22,68 22,32" 
-    fill="none"
-    stroke="rgba(255,255,255,0.3)"
-    strokeWidth="2"
-  />
-  
-  <!-- Center O -->
-  <circle cx="50" cy="50" r="18" fill="none" stroke="white" strokeWidth="4" />
-  
-  <!-- Top accent -->
-  <path d="M35 35 L50 20 L65 35" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-  
-  <!-- Bottom accent -->
-  <path d="M35 65 L50 80 L65 65" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+  <path d="M64 8L106.435 32.5V81.5L64 106L21.5654 81.5V32.5L64 8Z" fill="url(#snipeGradient)"/>
+  <path d="M64 20L95.6122 38.25V74.75L64 93L32.3878 74.75V38.25L64 20Z" fill="#0A1328" fill-opacity="0.18"/>
+  <path d="M81.5 37.5C77.9 31.7 71.6 28 63.4 28C52.8 28 44.8 34.3 44.8 43.3C44.8 50.1 49.6 54.3 60 56.9L67.6 58.9C73.5 60.4 75.8 62.4 75.8 65.6C75.8 69.9 71.3 73 64.4 73C56.8 73 51.2 69.6 47.6 63.2L35 70.5C40.2 80.2 50.5 86 63.8 86C78.3 86 89.3 78.3 89.3 65.5C89.3 56.5 83.5 50.7 71 47.7L63.4 45.8C57.5 44.4 55.1 42.6 55.1 39.8C55.1 36.1 58.7 33.4 64.6 33.4C70.1 33.4 74.3 35.8 77 40.5L81.5 37.5Z" fill="white"/>
+  <path d="M46.5 90.5H81.5" stroke="white" stroke-opacity="0.55" stroke-width="6" stroke-linecap="round"/>
 </svg>

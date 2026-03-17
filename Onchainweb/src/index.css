@@ -134,6 +134,8 @@ header.site-header {
 .app-logo-img {
   width: 36px;
   height: 36px;
+  display: block;
+  flex-shrink: 0;
   object-fit: contain;
   filter: drop-shadow(0 0 10px rgba(0, 194, 255, 0.45));
 }
@@ -2862,6 +2864,7 @@ footer {
   .app-logo-img {
     width: 30px;
     height: 30px;
+    display: block;
   }
 }
 
