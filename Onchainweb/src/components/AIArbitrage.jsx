@@ -6,6 +6,7 @@ import {
     getTradingAdminSettings,
     saveAiArbitrageInvestment,
     saveUser,
+    subscribeToAiArbitrageHistory,
     subscribeToAiArbitrageInvestments,
     subscribeToTradingAdminSettings
 } from '../lib/firebase.js';
@@ -43,7 +44,8 @@ export default function AIArbitrage ( { isOpen = true, onClose } ) {
     const [ selectedLevelId, setSelectedLevelId ] = useState( '' );
     const [ amount, setAmount ] = useState( '' );
     const [ activeInvestments, setActiveInvestments ] = useState( [] );
-    const [ history, setHistory ] = useState( () => JSON.parse( localStorage.getItem( `aiArbitrageHistory_${userId}` ) || '[]' ) );
+    const [ history, setHistory ] = useState( [] );
+    const [ now, setNow ] = useState( () => Date.now() );
     const settlingInvestmentsRef = useRef( new Set() );
 
     const currentPage = getPageFromPath( location.pathname );
@@ -76,63 +78,66 @@ export default function AIArbitrage ( { isOpen = true, onClose } ) {
 
     useEffect( () => {
         if ( !userId ) return undefined;
-        return subscribeToAiArbitrageInvestments( setActiveInvestments );
+        const unsubscribeActive = subscribeToAiArbitrageInvestments( setActiveInvestments );
+        const unsubscribeHistory = subscribeToAiArbitrageHistory( userId, setHistory );
+        return () => {
+            unsubscribeActive?.();
+            unsubscribeHistory?.();
+        };
     }, [ userId ] );
-
-    useEffect( () => {
-        localStorage.setItem( `aiArbitrageHistory_${userId}`, JSON.stringify( history ) );
-    }, [ history, userId ] );
 
     useEffect( () => {
         localStorage.setItem( 'userBalance', String( balance ) );
     }, [ balance ] );
 
+    useEffect( () => {
+        if ( activeInvestments.length === 0 ) return undefined;
+        setNow( Date.now() );
+        const intervalId = setInterval( () => setNow( Date.now() ), 1000 );
+        return () => clearInterval( intervalId );
+    }, [ activeInvestments.length ] );
+
     const displayInvestments = useMemo( () => {
         return activeInvestments.map( ( investment ) => ( {
             ...investment,
-            timeLeft: Math.max( 0, ( investment.endTime || 0 ) - Date.now() )
+            timeLeft: Math.max( 0, ( investment.endTime || 0 ) - now )
         } ) );
-    }, [ activeInvestments ] );
+    }, [ activeInvestments, now ] );
 
     useEffect( () => {
         if ( displayInvestments.length === 0 ) return undefined;
 
-        const intervalId = setInterval( () => {
-            displayInvestments.forEach( ( investment ) => {
-                if ( investment.timeLeft > 0 || settlingInvestmentsRef.current.has( investment.id ) ) return;
+        displayInvestments.forEach( ( investment ) => {
+            if ( investment.timeLeft > 0 || settlingInvestmentsRef.current.has( investment.id ) ) return;
 
-                settlingInvestmentsRef.current.add( investment.id );
-                const marketFactor = Math.max( 0.75, Math.min( 1.35, 1 + momentumScore / 100 ) );
-                const profit = Number( ( investment.amount * investment.roi * marketFactor ).toFixed( 2 ) );
-                const payout = Number( ( investment.amount + profit ).toFixed( 2 ) );
-                const completedInvestment = {
-                    ...investment,
-                    completed: true,
-                    currentValue: payout,
-                    profit,
-                    payout,
-                    marketMomentumAtClose: momentumScore,
-                    completedAt: Date.now()
-                };
+            settlingInvestmentsRef.current.add( investment.id );
+            const marketFactor = Math.max( 0.75, Math.min( 1.35, 1 + momentumScore / 100 ) );
+            const profit = Number( ( investment.amount * investment.roi * marketFactor ).toFixed( 2 ) );
+            const payout = Number( ( investment.amount + profit ).toFixed( 2 ) );
+            const completedInvestment = {
+                ...investment,
+                completed: true,
+                currentValue: payout,
+                profit,
+                payout,
+                marketMomentumAtClose: momentumScore,
+                completedAt: Date.now()
+            };
 
-                saveAiArbitrageInvestment( completedInvestment )
-                    .then( () => {
-                        setBalance( ( prev ) => {
-                            const nextBalance = prev + payout;
-                            saveUser( userId, { balance: nextBalance } );
-                            return nextBalance;
-                        } );
-                        setHistory( ( prev ) => [ completedInvestment, ...prev ] );
-                        setToast( { message: `${investment.levelName} cycle completed with +$${profit.toFixed( 2 )}.`, type: 'success' } );
-                    } )
-                    .finally( () => {
-                        settlingInvestmentsRef.current.delete( investment.id );
+            saveAiArbitrageInvestment( completedInvestment )
+                .then( () => {
+                    setBalance( ( prev ) => {
+                        const nextBalance = prev + payout;
+                        saveUser( userId, { balance: nextBalance } );
+                        return nextBalance;
                     } );
-            } );
-        }, 500 );
-
-        return () => clearInterval( intervalId );
-    }, [ displayInvestments, momentumScore ] );
+                    setToast( { message: `${investment.levelName} cycle completed with +$${profit.toFixed( 2 )}.`, type: 'success' } );
+                } )
+                .finally( () => {
+                    settlingInvestmentsRef.current.delete( investment.id );
+                } );
+        } );
+    }, [ displayInvestments, momentumScore, userId ] );
 
     const showToast = ( message, type = 'info' ) => {
         setToast( { message, type } );

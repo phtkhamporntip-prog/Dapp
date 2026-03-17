@@ -9,6 +9,7 @@ import Trade from './components/Trade';
 import Wallet from './components/Wallet';
 import BinaryOptions from './components/BinaryOptions';
 import AIArbitrage from './components/AIArbitrage';
+import CustomerService from './components/CustomerService';
 import BottomNav from './components/BottomNav';
 import NotFound from './components/NotFound';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -25,6 +26,7 @@ function App () {
             <Route path="/trade/binary-options/*" element={<BinaryOptions />} />
             <Route path="/trade/ai-arbitrage/*" element={<AIArbitrage />} />
             <Route path="/wallet" element={<Wallet isOpen />} />
+            <Route path="/customer-service" element={<CustomerService />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

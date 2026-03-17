@@ -26,7 +26,7 @@ export default function Header () {
             <nav className="nav-links">
                 <Link to="/trade">Trade</Link>
                 <Link to="/wallet">Wallet</Link>
-                <Link to="/admin">Admin</Link>
+                <Link to="/customer-service">Support</Link>
             </nav>
             <div className="wallet-connector">
                 {isConnected ? (

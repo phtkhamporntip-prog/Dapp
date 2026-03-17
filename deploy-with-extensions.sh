@@ -5,7 +5,7 @@
 
 set -e
 
-PROJECT_ID="onchainweb-37d30"
+PROJECT_ID="onchainweb-dapp"
 APP_DIR="Onchainweb"
 FIREBASE_URL="https://console.firebase.google.com/u/0/project/$PROJECT_ID"
 EXTENSIONS_URL="https://console.firebase.google.com/u/0/project/$PROJECT_ID/extensions"

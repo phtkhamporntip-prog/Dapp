@@ -23,8 +23,8 @@ export const initializeMasterAccount = async () => {
       return false
     }
 
-    // Master email is typically the first in the list and starts with 'master'
-    const masterEmail = allowedEmails.find(email => email.startsWith('master@')) || allowedEmails[0]
+    // Master email defaults to the first allowlisted admin email.
+    const masterEmail = allowedEmails[0]
 
     logger.log('[PROVISIONING] Master account email:', masterEmail)
     return {

@@ -9,6 +9,7 @@
 ## 📋 What is LocalStack?
 
 LocalStack emulates AWS services (and Firebase) locally on your machine, allowing you to:
+
 - ✅ Test Firebase services without internet
 - ✅ Develop offline
 - ✅ Avoid Firebase Console manual setup (in some cases)
@@ -28,6 +29,7 @@ localstack start -e SERVICES=firestore,dynamodb -d
 ```
 
 **What this does**:
+
 - Starts LocalStack in background (`-d`)
 - Enables Firestore service (`-e SERVICES=firestore`)
 - Enables DynamoDB (for data storage)
@@ -43,6 +45,7 @@ localstack start \
 ```
 
 **Services included**:
+
 - ✅ Firestore (document database)
 - ✅ DynamoDB (backup database)
 - ✅ Cognito IDP (authentication)
@@ -57,6 +60,7 @@ localstack status
 ```
 
 **Expected output**:
+
 ```
 ✓ All LocalStack services running
 ✓ LocalStack hostname: localhost
@@ -89,7 +93,7 @@ VITE_AUTH_EMULATOR_HOST=localhost:9099
 VITE_FIREBASE_API_KEY=demo-key
 VITE_FIREBASE_AUTH_DOMAIN=localhost
 VITE_FIREBASE_DATABASE_URL=http://localhost:4566
-VITE_FIREBASE_PROJECT_ID=onchainweb-37d30
+VITE_FIREBASE_PROJECT_ID=onchainweb-dapp
 VITE_FIREBASE_STORAGE_BUCKET=localhost:9199
 VITE_FIREBASE_MESSAGING_SENDER_ID=demo-sender
 VITE_FIREBASE_APP_ID=demo-app
@@ -100,10 +104,11 @@ EOF
 
 ```bash
 # Start Firebase emulator on LocalStack
-firebase emulators:start --project onchainweb-37d30
+firebase emulators:start --project onchainweb-dapp
 ```
 
 **Expected output**:
+
 ```
 ✓ Firestore Emulator running on localhost:8080
 ✓ Authentication Emulator running on localhost:9099
@@ -153,7 +158,7 @@ Wait 15 seconds
 ### Step 2: Start Firebase Emulator
 
 ```bash
-firebase emulators:start --project onchainweb-37d30
+firebase emulators:start --project onchainweb-dapp
 ```
 
 **Keep this running** (it will show a dashboard at http://localhost:4000)
@@ -166,6 +171,7 @@ npm run dev
 ```
 
 **Your app will now**:
+
 - ✅ Connect to LocalStack emulated services
 - ✅ Create users in emulated Firestore
 - ✅ Store data in emulated storage
@@ -183,6 +189,7 @@ http://localhost:4000
 ```
 
 You can:
+
 - 📊 View Firestore collections
 - 👤 Manage Authentication users
 - 📁 Browse Cloud Storage
@@ -210,7 +217,9 @@ docker stop <container-id>
 ## 🐛 Troubleshooting
 
 ### Problem: "LocalStack connection refused"
+
 **Solution**:
+
 ```bash
 # Check if LocalStack is running
 localstack status
@@ -220,27 +229,33 @@ localstack start -d
 ```
 
 ### Problem: "Cannot connect to Firestore Emulator"
+
 **Solution**:
+
 ```bash
 # Check emulator is running
-firebase emulators:start --project onchainweb-37d30
+firebase emulators:start --project onchainweb-dapp
 
 # Check port 8080 is available
 lsof -i :8080
 ```
 
 ### Problem: "Port already in use"
+
 **Solution**:
+
 ```bash
 # Kill process using port
 lsof -i :8080 | awk 'NR==2 {print $2}' | xargs kill -9
 
 # Then restart
-firebase emulators:start --project onchainweb-37d30
+firebase emulators:start --project onchainweb-dapp
 ```
 
 ### Problem: "Auth token expired"
+
 **Solution**:
+
 ```bash
 # Re-apply auth token
 localstack auth set-token "ls-nIMOYoBO-veTa-zOTe-9009-daJa07294c5e"
@@ -258,12 +273,13 @@ localstack start -d
 
 ```bash
 # Via Firebase CLI
-firebase auth:create --project onchainweb-37d30 \
+firebase auth:create --project onchainweb-dapp \
   --email test@example.com \
   --password password123
 ```
 
 Or in Emulator UI at http://localhost:4000:
+
 1. Go to **Authentication**
 2. Click **Add User**
 3. Email: `test@example.com`
@@ -273,6 +289,7 @@ Or in Emulator UI at http://localhost:4000:
 ### Create Test Firestore Documents
 
 In Emulator Dashboard (http://localhost:4000):
+
 1. Go to **Firestore**
 2. Click **+ Start collection**
 3. Name: `users`
@@ -287,7 +304,7 @@ In Emulator Dashboard (http://localhost:4000):
    localstack start -d
 
 2. Start Firebase Emulator (new terminal)
-   firebase emulators:start --project onchainweb-37d30
+   firebase emulators:start --project onchainweb-dapp
 
 3. Start Development Server (another terminal)
    cd Onchainweb
@@ -316,6 +333,7 @@ In Emulator Dashboard (http://localhost:4000):
 ## 🎯 Use Cases
 
 ### Use LocalStack When:
+
 ✅ Developing features without Firebase
 ✅ Testing authentication flows
 ✅ Building admin features
@@ -325,6 +343,7 @@ In Emulator Dashboard (http://localhost:4000):
 ✅ Running tests
 
 ### Use Production Firebase When:
+
 ✅ Deploying to production
 ✅ Testing with real users
 ✅ Using real wallet connections
@@ -352,7 +371,7 @@ firebase emulators:start --import ./exportedData
 localstack start -d
 
 # Terminal 2: Firebase Emulator
-firebase emulators:start --project onchainweb-37d30
+firebase emulators:start --project onchainweb-dapp
 
 # Terminal 3: Dev Server
 npm run dev
@@ -371,7 +390,7 @@ Ctrl+C in emulator terminal
 rm -rf ./exportedData
 
 # Restart fresh
-firebase emulators:start --project onchainweb-37d30
+firebase emulators:start --project onchainweb-dapp
 ```
 
 ### Tip 4: Monitor LocalStack Logs
@@ -386,6 +405,7 @@ localstack logs -f
 ## 🔐 Auth Token Info
 
 **Your Token**:
+
 ```
 ls-nIMOYoBO-veTa-zOTe-9009-daJa07294c5e
 ```
@@ -395,6 +415,7 @@ ls-nIMOYoBO-veTa-zOTe-9009-daJa07294c5e
 **How to renew**: Contact LocalStack support
 
 **To update token**:
+
 ```bash
 localstack auth set-token "new-token-here"
 ```
@@ -403,18 +424,19 @@ localstack auth set-token "new-token-here"
 
 ## 📖 Documentation Links
 
-| Resource | Link |
-|----------|------|
-| **LocalStack Docs** | https://docs.localstack.cloud |
-| **Firebase Emulator** | https://firebase.google.com/docs/emulator-suite |
+| Resource               | Link                                                       |
+| ---------------------- | ---------------------------------------------------------- |
+| **LocalStack Docs**    | https://docs.localstack.cloud                              |
+| **Firebase Emulator**  | https://firebase.google.com/docs/emulator-suite            |
 | **Firestore Emulator** | https://firebase.google.com/docs/firestore/local-emulation |
-| **Auth Emulator** | https://firebase.google.com/docs/auth/emulator-setup |
+| **Auth Emulator**      | https://firebase.google.com/docs/auth/emulator-setup       |
 
 ---
 
 ## ✨ Summary
 
 LocalStack enables you to:
+
 - ✅ Develop completely offline
 - ✅ Test Firebase features locally
 - ✅ Speed up iteration cycle
@@ -432,7 +454,7 @@ LocalStack enables you to:
 localstack start -d
 
 # Start Firebase Emulator
-firebase emulators:start --project onchainweb-37d30
+firebase emulators:start --project onchainweb-dapp
 
 # View EmulatorFirestore Emulator UI
 # Open: http://localhost:4000

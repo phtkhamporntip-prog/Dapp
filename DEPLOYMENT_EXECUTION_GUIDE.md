@@ -1,7 +1,7 @@
 # 🚀 DEPLOYMENT EXECUTION GUIDE - Step by Step
 
 **Status**: Ready to Deploy
-**Project ID**: onchainweb-37d30
+**Project ID**: onchainweb-dapp
 **Date**: February 6, 2026
 
 ---
@@ -11,8 +11,9 @@
 ### 1.1 Open Firebase Console
 
 **Click this link** (or copy and paste in browser):
+
 ```
-https://console.firebase.google.com/u/0/project/onchainweb-37d30
+https://console.firebase.google.com/u/0/project/onchainweb-dapp
 ```
 
 ---
@@ -31,6 +32,7 @@ https://console.firebase.google.com/u/0/project/onchainweb-37d30
 8. ✅ When done, you'll see your Firestore console with a message "Database created"
 
 **Status Check**:
+
 - ✅ You should see "Firestore Database" in the left menu with a green dot (or "Online")
 
 ---
@@ -48,6 +50,7 @@ https://console.firebase.google.com/u/0/project/onchainweb-37d30
 7. ✅ You should see "Email/Password" is now "Enabled"
 
 **Status Check**:
+
 - ✅ You should see "Email/Password" with status "Enabled" (green checkmark)
 
 ---
@@ -64,6 +67,7 @@ https://console.firebase.google.com/u/0/project/onchainweb-37d30
 6. ✅ Wait 30 seconds for Storage to initialize
 
 **Status Check**:
+
 - ✅ You should see "Storage" in the left menu
 
 ---
@@ -74,6 +78,7 @@ https://console.firebase.google.com/u/0/project/onchainweb-37d30
 
 Go to: **Build** section in left menu
 You should see:
+
 - ✅ Firestore Database - Online (green dot)
 - ✅ Authentication - Enabled
 - ✅ (Optional) Storage - Ready
@@ -96,14 +101,15 @@ You should see:
 
 **In the "Add user" dialog**:
 
-1. **Email field**: Type: `master@gmail.com`
+1. **Email field**: Type: `phtkhamporntip@gmail.com`
 2. **Password field**: Create a strong password (example: `SnipeMaster2026!`)
    - ⚠️ **SAVE THIS PASSWORD** in a password manager or secure note!
 3. Click the blue **"Add user"** button
 4. ✅ You should see the new user appear in the Users list
 
 **Status Check**:
-- ✅ master@gmail.com appears in the Users list
+
+- ✅ phtkhamporntip@gmail.com appears in the Users list
 
 ---
 
@@ -119,7 +125,8 @@ You should see:
 5. ✅ You should see both users in the Users list now
 
 **Status Check**:
-- ✅ master@gmail.com is in the list
+
+- ✅ phtkhamporntip@gmail.com is in the list
 - ✅ admin@gmail.com is in the list
 
 ---
@@ -127,8 +134,9 @@ You should see:
 ## ✅ STEP 2 COMPLETE
 
 **You should now see 2 users in Authentication → Users**:
+
 ```
-✅ master@gmail.com
+✅ phtkhamporntip@gmail.com
 ✅ admin@gmail.com
 ```
 
@@ -139,8 +147,9 @@ You should see:
 ### 3.1 Open Terminal
 
 **Open a terminal in your workspace**:
+
 ```bash
-cd /workspaces/Snipe-
+cd /workspaces/Dapp
 ```
 
 ---
@@ -148,6 +157,7 @@ cd /workspaces/Snipe-
 ### 3.2 Run the Deployment Script
 
 **Copy and paste this command**:
+
 ```bash
 ./deploy-with-extensions.sh
 ```
@@ -161,32 +171,43 @@ Then press **ENTER**.
 The script will ask several yes/no questions. **Here's how to answer**:
 
 #### Question 1: "Have you completed steps 1-3 in Firebase Console?"
+
 **Your answer**: Type `y` and press ENTER
+
 ```
 Answer: y
 ```
 
 #### Question 2: "Have you created both admin accounts?"
+
 **Your answer**: Type `y` and press ENTER
+
 ```
 Answer: y
 ```
 
 #### Question 3: "Do you want to install Firebase Extensions?"
+
 **Your answer**: Type `y` for yes (recommended) or `n` for no
+
 ```
 Answer: y (recommended)
 ```
+
 - If you choose `y`, follow the prompts to install extensions (optional, can skip)
 
 #### Question 4: "Test locally before deploying to production?"
+
 **Your answer**: Type `n` to skip local testing
+
 ```
 Answer: n
 ```
 
 #### Question 5: "Choose your deployment platform"
+
 The script will show:
+
 ```
 1) Vercel (Recommended - fastest, auto-scaling)
 2) Firebase Hosting (native Firebase, simpler)
@@ -195,6 +216,7 @@ The script will show:
 ```
 
 **Recommended**: Type `1` for Vercel (fastest)
+
 ```
 Enter choice: 1
 ```
@@ -220,17 +242,18 @@ If you chose Vercel (option 1), the script will:
 
 If you chose option 2 (Firebase Hosting):
 
-1. Script will automatically deploy to: `https://onchainweb-37d30.web.app`
+1. Script will automatically deploy to: `https://onchainweb-dapp.web.app`
 2. **Wait 2-3 minutes** for deployment
 3. ✅ When done, script will confirm deployment
 
-**Save this URL**: `https://onchainweb-37d30.web.app`
+**Save this URL**: `https://onchainweb-dapp.web.app`
 
 ---
 
 ## ✅ STEP 3 COMPLETE
 
 **You should have**:
+
 - ✅ App deployed to production
 - ✅ Production URL (from Vercel or Firebase)
 - ✅ Deployment completed successfully
@@ -263,7 +286,7 @@ If you chose option 2 (Firebase Hosting):
 1. **Go to**: `https://snipe-xyz.vercel.app/master-admin` (replace with your URL)
 2. **Wait for login page to appear**
 3. **Enter credentials**:
-   - Email: `master@gmail.com`
+   - Email: `phtkhamporntip@gmail.com`
    - Password: (the one you created in Step 2)
 4. Click **"Login"** or press ENTER
 5. **Wait 2-3 seconds** for dashboard to load
@@ -316,7 +339,7 @@ If you chose option 2 (Firebase Hosting):
 
 **In Firebase Console**:
 
-1. Go back to: `https://console.firebase.google.com/u/0/project/onchainweb-37d30`
+1. Go back to: `https://console.firebase.google.com/u/0/project/onchainweb-dapp`
 2. Click **Build** → **Firestore Database**
 3. **Look at left sidebar** - you should see collections appearing:
    - ✅ `users` collection (created when someone logs in)
@@ -330,6 +353,7 @@ If you chose option 2 (Firebase Hosting):
 ## ✅ STEP 4 COMPLETE
 
 **All tests passed**:
+
 - ✅ Main app loads without errors
 - ✅ Master admin can login and access dashboard
 - ✅ Regular admin can login and access panel
@@ -346,13 +370,13 @@ If you chose option 2 (Firebase Hosting):
 
 ## 📊 Summary
 
-| Step | Task | Time | Status |
-|------|------|------|--------|
-| 1 | Enable Firebase Services | 10 min | ✅ DONE |
-| 2 | Create Admin Accounts | 5 min | ✅ DONE |
-| 3 | Run Deployment Script | 15 min | ✅ DONE |
-| 4 | Verify Production | 5 min | ✅ DONE |
-| **TOTAL** | **Full Deployment** | **35 min** | **✅ COMPLETE** |
+| Step      | Task                     | Time       | Status          |
+| --------- | ------------------------ | ---------- | --------------- |
+| 1         | Enable Firebase Services | 10 min     | ✅ DONE         |
+| 2         | Create Admin Accounts    | 5 min      | ✅ DONE         |
+| 3         | Run Deployment Script    | 15 min     | ✅ DONE         |
+| 4         | Verify Production        | 5 min      | ✅ DONE         |
+| **TOTAL** | **Full Deployment**      | **35 min** | **✅ COMPLETE** |
 
 ---
 
@@ -364,7 +388,7 @@ Save these in a password manager:
 
 ```
 Master Admin:
-  Email: master@gmail.com
+   Email: phtkhamporntip@gmail.com
   Password: [what you created]
 
 Regular Admin:
@@ -375,20 +399,20 @@ Production URLs:
   Main App: [your-deployment-url]
   Master Admin: [your-deployment-url]/master-admin
   Admin Panel: [your-deployment-url]/admin
-  Firebase Console: https://console.firebase.google.com/u/0/project/onchainweb-37d30
+   Firebase Console: https://console.firebase.google.com/u/0/project/onchainweb-dapp
 ```
 
 ---
 
 ## 📞 Troubleshooting Quick Links
 
-| Problem | Solution |
-|---------|----------|
-| Firebase services won't enable | Enable billing on project (if needed) |
-| Can't login | Verify email and password match what you created |
-| App won't load | Clear browser cache (Ctrl+Shift+Del) or try incognito |
-| "Firebase not initialized" | Give deployment 1-2 more minutes to propagate |
-| Admin dashboard doesn't load | Check browser console for errors (F12) |
+| Problem                        | Solution                                              |
+| ------------------------------ | ----------------------------------------------------- |
+| Firebase services won't enable | Enable billing on project (if needed)                 |
+| Can't login                    | Verify email and password match what you created      |
+| App won't load                 | Clear browser cache (Ctrl+Shift+Del) or try incognito |
+| "Firebase not initialized"     | Give deployment 1-2 more minutes to propagate         |
+| Admin dashboard doesn't load   | Check browser console for errors (F12)                |
 
 ---
 

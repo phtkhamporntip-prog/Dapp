@@ -75,6 +75,16 @@ export const getChatMessages = async (sessionId, limit = 50) => {
 export const subscribeToChatMessages = (sessionId, callback) => {
   try {
     const eventSource = new EventSource(`${API_BASE}/api/chat/stream?sessionId=${sessionId}`);
+    let pollInterval = null;
+
+    const startPollingFallback = () => {
+      if (pollInterval) return;
+      pollInterval = setInterval(() => {
+        getChatMessages(sessionId).then(messages => {
+          callback(messages);
+        }).catch(console.error);
+      }, 5000);
+    };
 
     eventSource.onmessage = (event) => {
       try {
@@ -90,21 +100,16 @@ export const subscribeToChatMessages = (sessionId, callback) => {
     eventSource.onerror = (error) => {
       console.error('SSE connection error:', error);
       eventSource.close();
-      // Fallback to polling
-      const pollInterval = setInterval(() => {
-        getChatMessages(sessionId).then(messages => {
-          callback(messages);
-        }).catch(console.error);
-      }, 5000);
-      
-      return () => {
-        clearInterval(pollInterval);
-      };
+      // Fallback to polling if SSE disconnects.
+      startPollingFallback();
     };
 
     // Return cleanup function
     return () => {
       eventSource.close();
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
     };
   } catch (error) {
     console.error('Subscribe error:', error);

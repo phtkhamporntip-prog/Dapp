@@ -19,6 +19,7 @@ These environment variables **MUST** be set for the application to function.
 ### Firebase Configuration
 
 #### `VITE_FIREBASE_API_KEY`
+
 - **Required**: Yes
 - **Description**: Firebase Web API key
 - **Example**: `AIzaSyC1234567890abcdefghijklmnopqrs`
@@ -26,30 +27,35 @@ These environment variables **MUST** be set for the application to function.
 - **Security**: Can be public (restricted by Firebase security rules)
 
 #### `VITE_FIREBASE_AUTH_DOMAIN`
+
 - **Required**: Yes
 - **Description**: Firebase authentication domain
 - **Example**: `your-project.firebaseapp.com`
 - **Where to get**: Firebase Console → Project Settings → General
 
 #### `VITE_FIREBASE_PROJECT_ID`
+
 - **Required**: Yes
 - **Description**: Firebase project ID
-- **Example**: `your-project-id`
+- **Example**: `onchainweb-dapp`
 - **Where to get**: Firebase Console → Project Settings → General
 
 #### `VITE_FIREBASE_STORAGE_BUCKET`
+
 - **Required**: Yes
 - **Description**: Firebase Storage bucket name
 - **Example**: `your-project.appspot.com`
 - **Where to get**: Firebase Console → Project Settings → General
 
 #### `VITE_FIREBASE_MESSAGING_SENDER_ID`
+
 - **Required**: Yes
 - **Description**: Firebase Cloud Messaging sender ID
-- **Example**: `123456789012`
+- **Example**: `1032172642498`
 - **Where to get**: Firebase Console → Project Settings → Cloud Messaging
 
 #### `VITE_FIREBASE_APP_ID`
+
 - **Required**: Yes
 - **Description**: Firebase app ID
 - **Example**: `1:123456789012:web:abcdef1234567890`
@@ -58,6 +64,7 @@ These environment variables **MUST** be set for the application to function.
 ### WalletConnect
 
 #### `VITE_WALLETCONNECT_PROJECT_ID`
+
 - **Required**: Yes
 - **Description**: WalletConnect Cloud project ID
 - **Example**: `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`
@@ -73,12 +80,14 @@ These variables enhance functionality but aren't required for basic operation.
 ### Application Configuration
 
 #### `VITE_APP_NAME`
+
 - **Required**: No
 - **Default**: `OnchainWeb`
 - **Description**: Application display name
 - **Example**: `Snipe Trading Platform`
 
 #### `VITE_APP_URL`
+
 - **Required**: No
 - **Default**: `https://onchainweb.app`
 - **Description**: Public URL for meta tags and sharing
@@ -87,39 +96,62 @@ These variables enhance functionality but aren't required for basic operation.
 ### Admin Configuration
 
 #### `VITE_ENABLE_ADMIN`
+
 - **Required**: No
 - **Default**: `false`
 - **Description**: Enable admin and master admin routes
 - **Values**: `true` | `false`
-- **Production**: Should be `true` for platforms requiring admin access
+- **Production**: Keep `false` for public deployments and enable only for controlled admin release windows
 
 #### `VITE_ADMIN_ROUTE`
+
 - **Required**: No
-- **Default**: `/admin`
+- **Default**: `/internal-admin`
 - **Description**: URL path for admin panel
-- **Example**: `/dashboard/admin`
+- **Example**: `/internal-a7x-admin`
+- **Security**: Do not use obvious public routes in production
 
 #### `VITE_MASTER_ADMIN_ROUTE`
+
 - **Required**: No
-- **Default**: `/master-admin`
+- **Default**: `/internal-master`
 - **Description**: URL path for master admin panel
-- **Example**: `/dashboard/master`
+- **Example**: `/internal-a7x-master`
+- **Security**: Keep private and separate from public navigation
 
 #### `VITE_ADMIN_ALLOWLIST`
+
 - **Required**: No (Required if admin enabled)
 - **Description**: Comma-separated list of allowed admin emails
 - **Example**: `master@onchainweb.site,admin1@company.com`
 - **Note**: Emails must match Firebase Auth emails
 
+#### `VITE_ENABLE_ADMIN_WALLET_AUTODETECT`
+
+- **Required**: No
+- **Default**: `false`
+- **Description**: Auto-redirect connected admin wallets to admin routes
+- **Values**: `true` | `false`
+- **Production**: Keep `false` unless you explicitly want wallet-triggered admin route behavior
+
+#### `VITE_CLOUDFLARE_WORKER_URL`
+
+- **Required**: Recommended for live support
+- **Description**: Cloudflare Worker base URL used by real-time live chat API
+- **Example**: `https://your-support-api.workers.dev`
+- **Note**: Customer support chat stream and admin live support view both depend on this endpoint
+
 ### Telegram Integration
 
 #### `VITE_TELEGRAM_BOT_TOKEN`
+
 - **Required**: No
 - **Description**: Telegram bot token for notifications
 - **Example**: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`
 - **Where to get**: [@BotFather](https://t.me/botfather) on Telegram
 
 #### `VITE_TELEGRAM_CHAT_ID`
+
 - **Required**: No (Required if bot token set)
 - **Description**: Telegram chat/channel ID for messages
 - **Example**: `123456789` or `@channel_name`
@@ -128,17 +160,20 @@ These variables enhance functionality but aren't required for basic operation.
 ### Cloudflare TURN Server
 
 #### `VITE_CLOUDFLARE_TURN_SERVER_NAME`
+
 - **Required**: No
 - **Description**: Cloudflare TURN server name for WebRTC
 - **Example**: `turn.example.com`
 - **Where to get**: Cloudflare Dashboard → Calls
 
 #### `VITE_CLOUDFLARE_TURN_TOKEN_ID`
+
 - **Required**: No (Required if TURN server set)
 - **Description**: Cloudflare TURN token ID
 - **Where to get**: Cloudflare Dashboard → Calls
 
 #### `VITE_CLOUDFLARE_TURN_API_TOKEN`
+
 - **Required**: No (Required if TURN server set)
 - **Description**: Cloudflare TURN API token
 - **Where to get**: Cloudflare Dashboard → Calls
@@ -150,6 +185,7 @@ These variables enhance functionality but aren't required for basic operation.
 ### Logging and Debugging
 
 #### `VITE_ENABLE_DEBUG`
+
 - **Required**: No
 - **Default**: `false`
 - **Description**: Enable debug logging
@@ -158,6 +194,7 @@ These variables enhance functionality but aren't required for basic operation.
 - **Development**: Can be `true`
 
 #### `VITE_LOG_LEVEL`
+
 - **Required**: No
 - **Default**: `error`
 - **Description**: Logging level
@@ -168,17 +205,20 @@ These variables enhance functionality but aren't required for basic operation.
 ### Deposit Addresses
 
 #### `VITE_DEPOSIT_BTC`
+
 - **Required**: No (Recommended for production)
 - **Description**: Bitcoin deposit address
 - **Example**: `bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh`
 - **Note**: Falls back to hardcoded default if not set
 
 #### `VITE_DEPOSIT_USDT_TRC20`
+
 - **Required**: No (Recommended for production)
 - **Description**: USDT (TRC-20) deposit address
 - **Example**: `TXrvyV2A4sA41Z2V1Z2v4Z1v2Z2V1Z2v4Z`
 
 #### `VITE_DEPOSIT_USDT_ERC20`
+
 - **Required**: No (Recommended for production)
 - **Description**: USDT (ERC-20) deposit address
 - **Example**: `0x742d35Cc6634C0532925a3b844Bc454e4438f44e`
@@ -186,6 +226,7 @@ These variables enhance functionality but aren't required for basic operation.
 ### Authentication
 
 #### `VITE_ENABLE_STRICT_AUTH`
+
 - **Required**: No
 - **Default**: `true`
 - **Description**: Enable strict authentication checks
@@ -193,6 +234,7 @@ These variables enhance functionality but aren't required for basic operation.
 - **Production**: **MUST** be `true`
 
 #### `VITE_RATE_LIMIT_PER_MINUTE`
+
 - **Required**: No
 - **Default**: `100`
 - **Description**: Rate limit for API requests
@@ -208,6 +250,7 @@ These variables are used by Cloudflare Workers for server-side operations.
 ### Firebase Admin SDK
 
 #### `FIREBASE_PRIVATE_KEY`
+
 - **Required**: Yes (for Workers)
 - **Description**: Firebase Admin SDK private key
 - **Where to get**: Firebase Console → Project Settings → Service Accounts → Generate New Private Key
@@ -215,6 +258,7 @@ These variables are used by Cloudflare Workers for server-side operations.
 - **Format**: Full private key including `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----`
 
 #### `FIREBASE_CLIENT_EMAIL`
+
 - **Required**: Yes (for Workers)
 - **Description**: Firebase Admin SDK service account email
 - **Example**: `firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com`
@@ -222,6 +266,7 @@ These variables are used by Cloudflare Workers for server-side operations.
 - **Security**: Can be set via `wrangler secret put` or in wrangler.toml vars
 
 #### `FIREBASE_PROJECT_ID`
+
 - **Required**: Yes (for Workers)
 - **Description**: Firebase project ID (same as frontend)
 - **Example**: `your-project-id`
@@ -230,12 +275,14 @@ These variables are used by Cloudflare Workers for server-side operations.
 ### Rate Limiting
 
 #### `RATE_LIMIT_REQUESTS_PER_MINUTE`
+
 - **Required**: No
 - **Default**: `100`
 - **Description**: Maximum requests per minute per IP
 - **Example**: `100`
 
 #### `RATE_LIMIT_WINDOW_SECONDS`
+
 - **Required**: No
 - **Default**: `60`
 - **Description**: Time window for rate limiting
@@ -244,6 +291,7 @@ These variables are used by Cloudflare Workers for server-side operations.
 ### Storage Security
 
 #### `ENABLE_STORAGE_AUTH`
+
 - **Required**: No
 - **Default**: `true`
 - **Description**: Require authentication for storage operations
@@ -251,6 +299,7 @@ These variables are used by Cloudflare Workers for server-side operations.
 - **Production**: **MUST** be `true`
 
 #### `REQUIRE_WALLET_SIGNATURE`
+
 - **Required**: No
 - **Default**: `false`
 - **Description**: Require wallet signature for write operations
@@ -326,6 +375,7 @@ npm run dev
 ## Security Best Practices
 
 ### ✅ DO
+
 - Use different Firebase projects for dev/staging/production
 - Set `VITE_ENABLE_DEBUG=false` in production
 - Set `VITE_LOG_LEVEL=error` in production
@@ -334,6 +384,7 @@ npm run dev
 - Use Cloudflare Workers secrets for sensitive data
 
 ### ❌ DON'T
+
 - Commit .env files to git
 - Use dev credentials in production
 - Enable debug logging in production
@@ -346,21 +397,25 @@ npm run dev
 ## Troubleshooting
 
 ### App won't start
+
 - Check console for missing environment variables
 - Verify all required variables are set
 - Check Firebase credentials are correct
 
 ### Authentication not working
+
 - Verify `VITE_FIREBASE_*` variables are correct
 - Check Firebase Authentication is enabled
 - Verify domain is whitelisted in Firebase Console
 
 ### WalletConnect not working
+
 - Verify `VITE_WALLETCONNECT_PROJECT_ID` is set
 - Check project ID is valid on WalletConnect Cloud
 - Verify domain is whitelisted in WalletConnect project
 
 ### Admin panel not accessible
+
 - Verify `VITE_ENABLE_ADMIN=true`
 - Check email is in `VITE_ADMIN_ALLOWLIST`
 - Verify admin document exists in Firestore

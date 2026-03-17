@@ -1,23 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
     onAuthStateChanged,
-    subscribeToChatMessages,
-    subscribeToActiveChats,
-    saveAdminReply,
-    updateActiveChat,
     subscribeToUsers,
     subscribeToDeposits,
     subscribeToWithdrawals,
     subscribeToTrades,
-    subscribeToAiArbitrageInvestments,
+    subscribeToAllAiArbitrageInvestments,
     firebaseSignIn,
     firebaseSignOut,
     auth,
     setForcedBinaryOutcome,
 } from '../lib/firebase.js';
+import {
+    subscribeToActiveChats as subscribeToSupportActiveChats,
+    subscribeToChatMessages as subscribeToSupportChatMessages,
+    sendAdminReply,
+} from '../lib/cloudflareApi.js';
 import { formatApiError } from '../lib/errorHandling.js';
 import { handleAdminLogin, formatFirebaseAuthError } from '../lib/adminAuth.js';
-import { createAdminAccount, subscribeToAdmins, updateAdminAccount, deleteAdminAccount } from '../services/adminService.js';
+import { createAdminAccount, subscribeToAdmins, updateAdminAccount, deleteAdminAccount, processDeposit, processWithdrawal } from '../services/adminService.js';
 import Toast from './Toast.jsx';
 import TradingControlPanel from './TradingControlPanel.jsx';
 
@@ -39,6 +40,9 @@ export default function MasterAdminDashboard () {
     const [ aiInvestments, setAiInvestments ] = useState( [] );
     const [ activeChats, setActiveChats ] = useState( [] );
     const [ chatMessages, setChatMessages ] = useState( {} ); // Keyed by chatId
+    const [ selectedChatId, setSelectedChatId ] = useState( '' );
+    const [ adminReply, setAdminReply ] = useState( '' );
+    const [ isSendingReply, setIsSendingReply ] = useState( false );
 
     const showToast = ( message, type = 'info' ) => {
         setToast( { message, type } );
@@ -47,8 +51,6 @@ export default function MasterAdminDashboard () {
     // Reference scaffolded imports and state to avoid noisy eslint `no-unused-vars` warnings
     const _debugUnused_MasterAdmin = ( ctx ) => { if ( typeof console !== 'undefined' ) console.debug( 'mad-debug', ctx ); };
     _debugUnused_MasterAdmin( {
-        saveAdminReply,
-        updateActiveChat,
         createAdminAccount,
         subscribeToAdmins,
         updateAdminAccount,
@@ -122,8 +124,8 @@ export default function MasterAdminDashboard () {
             subscribeToDeposits( setDeposits ),
             subscribeToWithdrawals( setWithdrawals ),
             subscribeToTrades( setTrades ),
-            subscribeToAiArbitrageInvestments( setAiInvestments ),
-            subscribeToActiveChats( setActiveChats )
+            subscribeToAllAiArbitrageInvestments( setAiInvestments ),
+            subscribeToSupportActiveChats( setActiveChats )
         ];
 
         // Return a cleanup function that unsubscribes from all listeners
@@ -146,7 +148,7 @@ export default function MasterAdminDashboard () {
         if ( !activeChats.length ) return;
 
         const messageSubscriptions = activeChats.map( chat =>
-            subscribeToChatMessages( chat.id, handleChatMessages( chat.id ) )
+            subscribeToSupportChatMessages( chat.id || chat.sessionId, handleChatMessages( chat.id || chat.sessionId ) )
         );
 
         return () => {
@@ -198,6 +200,45 @@ export default function MasterAdminDashboard () {
             showToast( 'Admin account created successfully!', 'success' );
         } catch ( error ) {
             showToast( formatApiError( error ), 'error' );
+        }
+    };
+
+    const handleDepositAction = async ( deposit, status ) => {
+        try {
+            await processDeposit( deposit.id, deposit.userId, status, deposit.amount || 0 );
+            showToast( `Deposit ${status}.`, 'success' );
+        } catch ( error ) {
+            showToast( formatApiError( error ), 'error' );
+        }
+    };
+
+    const handleWithdrawalAction = async ( withdrawal, status ) => {
+        try {
+            await processWithdrawal( withdrawal.id, withdrawal.userId, status, withdrawal.amount || 0 );
+            showToast( `Withdrawal ${status}.`, 'success' );
+        } catch ( error ) {
+            showToast( formatApiError( error ), 'error' );
+        }
+    };
+
+    const handleSendSupportReply = async () => {
+        const targetChatId = selectedChatId || activeChats[ 0 ]?.id || activeChats[ 0 ]?.sessionId;
+        const text = adminReply.trim();
+
+        if ( !targetChatId || !text ) {
+            showToast( 'Select a chat and enter a message.', 'error' );
+            return;
+        }
+
+        setIsSendingReply( true );
+        try {
+            await sendAdminReply( targetChatId, text, 'Support Admin' );
+            setAdminReply( '' );
+            showToast( 'Reply sent to customer.', 'success' );
+        } catch ( error ) {
+            showToast( formatApiError( error ), 'error' );
+        } finally {
+            setIsSendingReply( false );
         }
     };
 
@@ -346,6 +387,7 @@ export default function MasterAdminDashboard () {
                                         <th>Amount</th>
                                         <th>Status</th>
                                         <th>Timestamp</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -354,7 +396,13 @@ export default function MasterAdminDashboard () {
                                             <td>{deposit.userId?.substring( 0, 8 )}...</td>
                                             <td>${deposit.amount || 0}</td>
                                             <td><span className={`badge ${deposit.status || 'pending'}`}>{deposit.status || 'pending'}</span></td>
-                                            <td>{new Date( deposit.timestamp?.toMillis?.() || Date.now() ).toLocaleString()}</td>
+                                            <td>{new Date( deposit.timestamp?.toMillis?.() || deposit.timestamp || Date.now() ).toLocaleString()}</td>
+                                            <td>
+                                                <span className="force-outcome-btns">
+                                                    <button className="force-win-btn" onClick={() => handleDepositAction( deposit, 'approved' )}>Approve</button>
+                                                    <button className="force-loss-btn" onClick={() => handleDepositAction( deposit, 'rejected' )}>Reject</button>
+                                                </span>
+                                            </td>
                                         </tr>
                                     ) )}
                                 </tbody>
@@ -376,6 +424,8 @@ export default function MasterAdminDashboard () {
                                         <th>User</th>
                                         <th>Amount</th>
                                         <th>Status</th>
+                                        <th>Timestamp</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -384,6 +434,13 @@ export default function MasterAdminDashboard () {
                                             <td>{withdrawal.userId?.substring( 0, 8 )}...</td>
                                             <td>${withdrawal.amount || 0}</td>
                                             <td><span className={`badge ${withdrawal.status || 'pending'}`}>{withdrawal.status || 'pending'}</span></td>
+                                            <td>{new Date( withdrawal.timestamp?.toMillis?.() || withdrawal.timestamp || Date.now() ).toLocaleString()}</td>
+                                            <td>
+                                                <span className="force-outcome-btns">
+                                                    <button className="force-win-btn" onClick={() => handleWithdrawalAction( withdrawal, 'approved' )}>Approve</button>
+                                                    <button className="force-loss-btn" onClick={() => handleWithdrawalAction( withdrawal, 'rejected' )}>Reject</button>
+                                                </span>
+                                            </td>
                                         </tr>
                                     ) )}
                                 </tbody>
@@ -477,24 +534,84 @@ export default function MasterAdminDashboard () {
 
                 {/* Active Chats Section - Real-time */}
                 <section className="dashboard-section">
-                    <h2>💬 Active Chats ({activeChats.length})</h2>
+                    <h2>💬 Live Support Chats ({activeChats.length})</h2>
                     <div className="chat-list">
                         {activeChats.length === 0 ? (
-                            <p className="no-data">No active chats</p>
+                            <p className="no-data">No active support chats</p>
                         ) : (
                             activeChats.map( chat => (
-                                <div key={chat.id} className="chat-item">
-                                    <h4>{chat.userName || 'Anonymous'}</h4>
+                                <div
+                                    key={chat.id || chat.sessionId}
+                                    className={`chat-item ${( selectedChatId === ( chat.id || chat.sessionId ) ) ? 'selected-chat' : ''}`}
+                                    onClick={() => setSelectedChatId( chat.id || chat.sessionId )}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={( event ) => {
+                                        if ( event.key === 'Enter' || event.key === ' ' ) {
+                                            setSelectedChatId( chat.id || chat.sessionId );
+                                        }
+                                    }}
+                                >
+                                    <h4>{chat.userName || chat.senderName || 'Anonymous'}</h4>
                                     <p className="chat-preview">{chat.lastMessage || 'No messages'}</p>
                                     <span className="message-count">
-                                        {( chatMessages[ chat.id ] || [] ).length} messages
+                                        {( chatMessages[ chat.id || chat.sessionId ] || [] ).length} messages
                                     </span>
                                 </div>
                             ) )
                         )}
                     </div>
+
+                    <div className="chat-admin-panel">
+                        <h3>Reply as Support Admin</h3>
+                        <p className="chat-admin-target">
+                            Chat: {selectedChatId || activeChats[ 0 ]?.id || activeChats[ 0 ]?.sessionId || 'None selected'}
+                        </p>
+                        <textarea
+                            className="chat-admin-input"
+                            value={adminReply}
+                            onChange={( event ) => setAdminReply( event.target.value )}
+                            placeholder="Type your support reply..."
+                            rows={3}
+                        />
+                        <button className="force-win-btn" onClick={handleSendSupportReply} disabled={isSendingReply}>
+                            {isSendingReply ? 'Sending...' : 'Send Reply'}
+                        </button>
+                    </div>
                 </section>
             </div>
+
+            <style>{`
+                .selected-chat {
+                    border: 1px solid rgba(16, 185, 129, 0.45);
+                    box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25);
+                }
+
+                .chat-admin-panel {
+                    margin-top: 12px;
+                    padding: 12px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 10px;
+                    background: rgba(0, 0, 0, 0.15);
+                }
+
+                .chat-admin-target {
+                    margin: 6px 0 10px;
+                    opacity: 0.8;
+                    font-size: 0.92rem;
+                }
+
+                .chat-admin-input {
+                    width: 100%;
+                    margin-bottom: 10px;
+                    border-radius: 8px;
+                    border: 1px solid rgba(255, 255, 255, 0.18);
+                    background: rgba(0, 0, 0, 0.2);
+                    color: #fff;
+                    padding: 10px;
+                    resize: vertical;
+                }
+            `}</style>
         </div>
     );
 }

@@ -232,8 +232,8 @@ export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
           from: walletAddress
         }
 
-        await saveDepositRequest( depositRecord )
-        setDeposits( prev => [ depositRecord, ...prev ] )
+        const savedDeposit = await saveDepositRequest( depositRecord )
+        setDeposits( prev => [ savedDeposit, ...prev.filter( item => item.id !== savedDeposit.id ) ] )
 
         // Log activity
         logActivity( 'Deposit', `Deposited ${amount} ${selectedToken}` )
@@ -300,8 +300,8 @@ export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
           to: withdrawalAddress.trim()
         }
 
-        await saveWithdrawalRequest( withdrawalRecord )
-        setWithdrawals( prev => [ withdrawalRecord, ...prev ] )
+        const savedWithdrawal = await saveWithdrawalRequest( withdrawalRecord )
+        setWithdrawals( prev => [ savedWithdrawal, ...prev.filter( item => item.id !== savedWithdrawal.id ) ] )
         setBalance( prev => prev - parsed )
         logActivity( 'Withdrawal', `Requested withdrawal of ${parsed} ${selectedToken}` )
 
@@ -580,6 +580,16 @@ export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
             >
               {isProcessing ? '⏳ Processing...' : `Deposit ${amount || '0'} ${selectedToken}`}
             </button>
+
+            <button
+              className="wa-secondary-btn"
+              onClick={() => {
+                setHistoryTab( 'deposits' )
+                setActiveAction( 'history' )
+              }}
+            >
+              View Deposit History
+            </button>
           </div>
         )}
 
@@ -639,6 +649,16 @@ export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
               disabled={isProcessing || !adminSettings.withdrawalEnabled}
             >
               {isProcessing ? '⏳ Submitting...' : `Request ${amount || '0'} ${selectedToken} Withdrawal`}
+            </button>
+
+            <button
+              className="wa-secondary-btn"
+              onClick={() => {
+                setHistoryTab( 'withdrawals' )
+                setActiveAction( 'history' )
+              }}
+            >
+              View Withdrawal History
             </button>
           </div>
         )}
@@ -1034,6 +1054,22 @@ export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
 
         .wa-main-btn.deposit {
           background: linear-gradient(135deg, #00b894, #00cec9);
+        }
+
+        .wa-secondary-btn {
+          width: 100%;
+          margin-top: 10px;
+          padding: 12px 16px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 12px;
+          color: #fff;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .wa-secondary-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
         }
 
         .wa-main-btn.vip {
