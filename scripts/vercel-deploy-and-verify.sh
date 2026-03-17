@@ -9,6 +9,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_DIR="$ROOT_DIR/Onchainweb"
+VERCEL_PROJECT_NAME="dapp-onchainweb"
+VERCEL_SCOPE="phtkhamporntip-progs-projects"
 CURRENT_STAGE="initializing"
 SCRIPT_LOG="$(mktemp /tmp/vercel-deploy-verify.XXXX.log)"
 
@@ -21,15 +23,17 @@ resolve_env_value() {
   local default_value="$2"
 
   if [[ -n "${!key:-}" ]]; then
-    echo "${!key}"
+    local env_raw="${!key}"
+    env_raw="$(printf '%s' "$env_raw" | tr -d '\r' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')"
+    echo "$env_raw"
     return
   fi
 
   local candidate_files=(
-    "$APP_DIR/.env.production"
-    "$APP_DIR/.env"
     "$ROOT_DIR/.env.production"
+    "$APP_DIR/.env.production"
     "$ROOT_DIR/.env"
+    "$APP_DIR/.env"
   )
 
   for file in "${candidate_files[@]}"; do
@@ -37,9 +41,11 @@ resolve_env_value() {
       local raw
       raw="$(grep -E "^${key}=" "$file" | tail -n 1 | cut -d'=' -f2- || true)"
       if [[ -n "$raw" ]]; then
-        # Strip surrounding quotes if present.
+        # Strip surrounding quotes/comments and normalize whitespace/CRLF.
         raw="${raw%\"}"
         raw="${raw#\"}"
+        raw="${raw%%#*}"
+        raw="$(printf '%s' "$raw" | tr -d '\r' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')"
         echo "$raw"
         return
       fi
@@ -47,6 +53,30 @@ resolve_env_value() {
   done
 
   echo "$default_value"
+}
+
+normalize_route_value() {
+  local route="$1"
+  route="$(printf '%s' "$route" | tr -d '\r' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')"
+
+  if [[ -z "$route" ]]; then
+    echo ""
+    return
+  fi
+
+  # Keep path-only value even if someone provided full URL in env.
+  if [[ "$route" =~ ^https?:// ]]; then
+    route="/${route#*://*/}"
+  fi
+
+  if [[ "${route:0:1}" != "/" ]]; then
+    route="/$route"
+  fi
+
+  # Collapse accidental duplicate slashes.
+  route="$(printf '%s' "$route" | sed -E 's#/{2,}#/#g')"
+
+  echo "$route"
 }
 
 ensure_secure_admin_release() {
@@ -89,15 +119,55 @@ if ! command -v vercel >/dev/null 2>&1; then
   npm install -g vercel >/dev/null
 fi
 
+if [[ ${#VERCEL_PROJECT_NAME} -gt 100 ]]; then
+  echo "ERROR: Invalid VERCEL_PROJECT_NAME '$VERCEL_PROJECT_NAME'"
+  echo "Project name must be 100 characters or fewer."
+  exit 1
+fi
+
+if [[ ! "$VERCEL_PROJECT_NAME" =~ ^[a-z0-9][a-z0-9._-]*$ ]]; then
+  echo "ERROR: Invalid VERCEL_PROJECT_NAME '$VERCEL_PROJECT_NAME'"
+  echo "Use lowercase letters, digits, '.', '_' or '-' only."
+  exit 1
+fi
+
+if [[ "$VERCEL_PROJECT_NAME" == *---* ]]; then
+  echo "ERROR: Invalid VERCEL_PROJECT_NAME '$VERCEL_PROJECT_NAME'"
+  echo "Project name cannot contain the sequence '---'."
+  exit 1
+fi
+
 CURRENT_STAGE="building frontend"
 echo "Building frontend..."
 cd "$APP_DIR"
-npm install
+if [[ -f "package-lock.json" ]]; then
+  npm ci
+else
+  npm install
+fi
 npm run build
 
 CURRENT_STAGE="deploying to vercel"
 echo "Deploying to Vercel production..."
-DEPLOY_OUTPUT="$(vercel --prod --yes --token "$VERCEL_TOKEN" 2>&1)"
+echo "Using Vercel project name: $VERCEL_PROJECT_NAME"
+echo "Using Vercel scope: $VERCEL_SCOPE"
+set +e
+if [[ -n "$VERCEL_SCOPE" ]]; then
+  DEPLOY_OUTPUT="$(vercel --prod --yes --scope "$VERCEL_SCOPE" --name "$VERCEL_PROJECT_NAME" --token "$VERCEL_TOKEN" 2>&1)"
+else
+  DEPLOY_OUTPUT="$(vercel --prod --yes --name "$VERCEL_PROJECT_NAME" --token "$VERCEL_TOKEN" 2>&1)"
+fi
+VERCEL_EXIT_CODE=$?
+set -e
+
+# Always print the raw Vercel output so auth/project errors are visible in CI/terminal logs.
+echo "$DEPLOY_OUTPUT"
+
+if [[ $VERCEL_EXIT_CODE -ne 0 ]]; then
+  echo "ERROR: Vercel deploy command failed with exit code $VERCEL_EXIT_CODE"
+  exit $VERCEL_EXIT_CODE
+fi
+
 DEPLOY_URL="$(printf "%s" "$DEPLOY_OUTPUT" | grep -Eo 'https://[[:alnum:].-]+\.vercel\.app' | tail -n 1 || true)"
 
 if [[ -z "$DEPLOY_URL" ]]; then
@@ -108,8 +178,11 @@ fi
 
 echo "Deployment URL: $DEPLOY_URL"
 
-ADMIN_ROUTE="$(resolve_env_value "VITE_ADMIN_ROUTE" "/internal-admin")"
-MASTER_ADMIN_ROUTE="$(resolve_env_value "VITE_MASTER_ADMIN_ROUTE" "/internal-master")"
+ADMIN_ROUTE="$(normalize_route_value "$(resolve_env_value "VITE_ADMIN_ROUTE" "/internal-admin")")"
+MASTER_ADMIN_ROUTE="$(normalize_route_value "$(resolve_env_value "VITE_MASTER_ADMIN_ROUTE" "/internal-master")")"
+
+echo "Resolved admin route: ${ADMIN_ROUTE}"
+echo "Resolved master admin route: ${MASTER_ADMIN_ROUTE}"
 
 CURRENT_STAGE="validating admin security posture"
 ensure_secure_admin_release

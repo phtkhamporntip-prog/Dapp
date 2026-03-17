@@ -12,6 +12,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TAG="${1:-v1.0.0}"
+VERCEL_PROJECT_NAME="dapp-onchainweb"
+VERCEL_SCOPE="phtkhamporntip-progs-projects"
 CURRENT_STAGE="initializing"
 SCRIPT_LOG="$(mktemp /tmp/public-release.XXXX.log)"
 
@@ -46,6 +48,9 @@ if [[ "${1:-}" == "--doctor" ]]; then
   else
     echo "[WARN] vercel CLI not installed (script can auto-install)"
   fi
+
+  echo "[INFO] VERCEL_PROJECT_NAME=${VERCEL_PROJECT_NAME}"
+  echo "[INFO] VERCEL_SCOPE=${VERCEL_SCOPE}"
 
   echo "== End Doctor =="
   exit 0
@@ -91,6 +96,8 @@ fi
 
 CURRENT_STAGE="deploy and route verification"
 echo "Running Vercel deploy + verification..."
+echo "Using Vercel project name: ${VERCEL_PROJECT_NAME}"
+echo "Using Vercel scope: ${VERCEL_SCOPE}"
 DEPLOY_LOG="$(mktemp)"
 bash "$ROOT_DIR/scripts/vercel-deploy-and-verify.sh" | tee "$DEPLOY_LOG"
 

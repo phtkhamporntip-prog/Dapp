@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
-import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi/react';
+import { createWeb3Modal } from '@web3modal/wagmi/react';
+import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
 import { WagmiProvider, useAccount, useConnect, useDisconnect } from 'wagmi';
 import { mainnet, bsc, polygon, arbitrum, optimism, avalanche, fantom } from 'wagmi/chains';
 import { WALLET_CONNECTORS, SUPPORTED_CHAINS } from '../config/constants';
