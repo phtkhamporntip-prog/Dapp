@@ -68,11 +68,12 @@ bucket_name = "onchainweb"
 
 [vars]
 # Non-sensitive configuration variables
-FIREBASE_PROJECT_ID = "onchainweb-b4b36"
-FIREBASE_DATABASE_URL = "https://onchainweb-b4b36-default-rtdb.asia-southeast1.firebasedatabase.app"
+FIREBASE_PROJECT_ID = "onchainweb-dapp"
+FIREBASE_DATABASE_URL = "https://onchainweb-dapp-default-rtdb.firebaseio.com"
 # SECURITY NOTE: Sensitive tokens should be set via wrangler secrets:
 # wrangler secret put TELEGRAM_BOT_TOKEN
 # wrangler secret put FIREBASE_PRIVATE_KEY
+# wrangler secret put FIREBASE_CLIENT_EMAIL
 # For now, placeholder values - REPLACE WITH SECRETS IN PRODUCTION
 TELEGRAM_BOT_TOKEN = "SET_VIA_WRANGLER_SECRET"
 TELEGRAM_USERNAME = "goblin_niko4"

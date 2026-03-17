@@ -1,4 +1,5 @@
 import { corsHeaders } from '../lib/cors.js'
+import { getFirebaseAccessToken } from '../lib/firebaseAccessToken.js'
 
 // User Management with KV Cache
 export async function handleUsers(request, env) {
@@ -19,16 +20,27 @@ export async function handleUsers(request, env) {
     })
   }
   
-  // Fetch from Firestore using REST API
-  // Note: This uses Firebase REST API with API key for read-only operations
-  // For production, consider using Firebase Admin SDK with service account
+  // Fetch from Firestore using REST API.
+  // Prefer service-account OAuth (global secret-based deployment).
+  // Fallback to API key only when secrets are unavailable.
   const firestoreUrl = `https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${userId}`;
   try {
-    const response = await fetch(firestoreUrl, {
-      headers: {
-        'X-Firebase-Api-Key': env.FIREBASE_API_KEY
-      }
-    });
+    let response;
+
+    if (env.FIREBASE_CLIENT_EMAIL && env.FIREBASE_PRIVATE_KEY) {
+      const accessToken = await getFirebaseAccessToken(env)
+      response = await fetch(firestoreUrl, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    } else {
+      response = await fetch(firestoreUrl, {
+        headers: {
+          'X-Firebase-Api-Key': env.FIREBASE_API_KEY
+        }
+      });
+    }
 
     if (response.ok) {
       const userData = await response.json();
