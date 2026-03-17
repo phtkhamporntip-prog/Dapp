@@ -35,6 +35,12 @@ export const LISTENER_CONFIG = {
   TRADES_LIMIT: 100
 };
 
+// VAPID public key for Firebase Cloud Messaging Web Push
+// Get from Firebase Console → Project Settings → Cloud Messaging → Web Push certificates
+export const FCM_VAPID_KEY =
+  import.meta.env.VITE_FIREBASE_VAPID_KEY ||
+  'BI_WvNxp_piXQOCG9etViGRLWY-1Yn5zquDUD9p_xqdFOykzUTSkFUYnsDX6E0X7ftfLvyV3t4uvGzKYBt490p0';
+
 // Check if Firebase is properly configured
 export const isFirebaseConfigured = () => {
   return !!(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId);

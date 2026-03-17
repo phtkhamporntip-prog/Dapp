@@ -549,4 +549,4 @@ export const saveChatMessage = async ( chatId, senderId, text ) => {
 
 export const isFirebaseEnabled = () => isFirebaseAvailable;
 
-export { isFirebaseAvailable, onAuthStateChanged, auth, db };
+export { isFirebaseAvailable, onAuthStateChanged, auth, db, app };
