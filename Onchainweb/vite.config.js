@@ -85,9 +85,41 @@ export default defineConfig(({ mode }) => {
             legalComments: 'none',
         },
         rollupOptions: {
-            // No externals - bundle everything for browser
+            output: {
+                manualChunks(id) {
+                    if (!id.includes('node_modules')) return undefined;
+
+                    // Extract the exact top-level package name (handles scoped packages like @firebase/app)
+                    const match = id.match(/node_modules\/((?:@[^/]+\/)?[^/]+)/);
+                    if (!match) return undefined;
+                    const pkg = match[1];
+
+                    // React ecosystem (independent of wallet/ethers libraries)
+                    if (['react', 'react-dom', 'react-router-dom', 'react-router', 'scheduler'].includes(pkg)) {
+                        return 'vendor-react';
+                    }
+                    // Firebase SDK (independent of react/wallet)
+                    if (pkg === 'firebase' || pkg.startsWith('@firebase/')) {
+                        return 'vendor-firebase';
+                    }
+                    // Web3 / wallet ecosystem (wagmi, walletconnect, web3modal, viem, ethers)
+                    // Kept together to avoid circular dependency issues since these libs interoperate
+                    if (
+                        pkg.startsWith('@wagmi/') ||
+                        pkg.startsWith('@walletconnect/') ||
+                        pkg.startsWith('@web3modal/') ||
+                        pkg.startsWith('@reown/') ||
+                        pkg === 'wagmi' ||
+                        pkg === 'ethers' ||
+                        pkg === 'viem' ||
+                        pkg === 'ox'
+                    ) {
+                        return 'vendor-web3';
+                    }
+                },
+            },
         },
-        chunkSizeWarningLimit: 3000,
+        chunkSizeWarningLimit: 2500,
         sourcemap: false,
     },
     server: {
