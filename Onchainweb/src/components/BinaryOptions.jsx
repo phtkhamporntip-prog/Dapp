@@ -22,6 +22,13 @@ function getAssetSymbol ( pair ) {
     return pair.split( '/' )[ 0 ].toLowerCase();
 }
 
+function formatCountdown ( milliseconds ) {
+    const totalSeconds = Math.max( 0, Math.ceil( milliseconds / 1000 ) );
+    const minutes = Math.floor( totalSeconds / 60 );
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${String( seconds ).padStart( 2, '0' )}`;
+}
+
 export default function BinaryOptions ( { isOpen = true, onClose } ) {
     const location = useLocation();
     const navigate = useNavigate();
@@ -315,7 +322,7 @@ export default function BinaryOptions ( { isOpen = true, onClose } ) {
                                                 <p>Entry ${trade.entryPrice.toFixed( 2 )}</p>
                                             </div>
                                             <div>
-                                                <strong>{Math.ceil( trade.timeLeft / 1000 )}s</strong>
+                                                <strong>{formatCountdown( trade.timeLeft )}</strong>
                                                 <p>Live ${Number( trade.currentPrice ).toFixed( 2 )}</p>
                                             </div>
                                             <div className="product-progress"><span style={{ width: `${Math.max( 0, Math.min( 100, progress ) )}%` }} /></div>

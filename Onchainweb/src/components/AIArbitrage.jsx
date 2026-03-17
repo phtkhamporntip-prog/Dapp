@@ -24,6 +24,13 @@ function getMomentumScore ( cryptoData ) {
     return total / topCoins.length;
 }
 
+function formatCountdown ( milliseconds ) {
+    const totalSeconds = Math.max( 0, Math.ceil( milliseconds / 1000 ) );
+    const minutes = Math.floor( totalSeconds / 60 );
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${String( seconds ).padStart( 2, '0' )}`;
+}
+
 export default function AIArbitrage ( { isOpen = true, onClose } ) {
     const location = useLocation();
     const navigate = useNavigate();
@@ -276,7 +283,7 @@ export default function AIArbitrage ( { isOpen = true, onClose } ) {
                                                 <p>ROI {( Number( investment.roi || 0 ) * 100 ).toFixed( 0 )}%</p>
                                             </div>
                                             <div>
-                                                <strong>{Math.ceil( investment.timeLeft / 1000 )}s</strong>
+                                                <strong>{formatCountdown( investment.timeLeft )}</strong>
                                                 <p>Live momentum {momentumScore.toFixed( 2 )}%</p>
                                             </div>
                                             <div className="product-progress"><span style={{ width: `${Math.max( 0, Math.min( 100, progress ) )}%` }} /></div>

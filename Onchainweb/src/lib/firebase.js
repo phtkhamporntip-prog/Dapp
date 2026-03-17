@@ -438,6 +438,100 @@ export const subscribeToUsers = ( callback ) => {
   }, fallback );
 };
 
+export const saveDepositRequest = async ( deposit ) => {
+  const depositsKey = 'deposits';
+  const userDepositsKey = `userDeposits_${deposit.userId}`;
+  const normalized = {
+    status: 'pending',
+    ...deposit,
+    timestamp: deposit.timestamp || Date.now()
+  };
+
+  if ( !isFirebaseAvailable ) {
+    const allDeposits = getLocalStorageFallback( depositsKey, [] );
+    allDeposits.unshift( normalized );
+    localStorage.setItem( depositsKey, JSON.stringify( allDeposits ) );
+
+    const userDeposits = getLocalStorageFallback( userDepositsKey, [] );
+    userDeposits.unshift( normalized );
+    localStorage.setItem( userDepositsKey, JSON.stringify( userDeposits ) );
+    return normalized;
+  }
+
+  const payload = {
+    ...normalized,
+    createdAt: serverTimestamp(),
+  };
+
+  const docRef = await addDoc( collection( db, 'deposits' ), payload );
+  return { id: docRef.id, ...normalized };
+};
+
+export const saveWithdrawalRequest = async ( withdrawal ) => {
+  const withdrawalsKey = 'withdrawals';
+  const userWithdrawalsKey = `userWithdrawals_${withdrawal.userId}`;
+  const normalized = {
+    status: 'pending',
+    ...withdrawal,
+    timestamp: withdrawal.timestamp || Date.now()
+  };
+
+  if ( !isFirebaseAvailable ) {
+    const allWithdrawals = getLocalStorageFallback( withdrawalsKey, [] );
+    allWithdrawals.unshift( normalized );
+    localStorage.setItem( withdrawalsKey, JSON.stringify( allWithdrawals ) );
+
+    const userWithdrawals = getLocalStorageFallback( userWithdrawalsKey, [] );
+    userWithdrawals.unshift( normalized );
+    localStorage.setItem( userWithdrawalsKey, JSON.stringify( userWithdrawals ) );
+    return normalized;
+  }
+
+  const payload = {
+    ...normalized,
+    createdAt: serverTimestamp(),
+  };
+
+  const docRef = await addDoc( collection( db, 'withdrawals' ), payload );
+  return { id: docRef.id, ...normalized };
+};
+
+export const subscribeToUserDeposits = ( userId, callback ) => {
+  const key = `userDeposits_${userId}`;
+  const fallback = () => callback( getLocalStorageFallback( key, [] ) );
+  if ( !isFirebaseAvailable || !userId ) return fallback(), () => { };
+
+  const q = query(
+    collection( db, 'deposits' ),
+    where( 'userId', '==', userId ),
+    orderBy( 'timestamp', 'desc' ),
+    limit( 50 )
+  );
+
+  return onSnapshot( q, ( snapshot ) => {
+    const deposits = snapshot.docs.map( d => ( { id: d.id, ...d.data(), timestamp: convertTimestamp( d.data().timestamp ) || convertTimestamp( d.data().createdAt ) } ) );
+    callback( deposits );
+  }, fallback );
+};
+
+export const subscribeToUserWithdrawals = ( userId, callback ) => {
+  const key = `userWithdrawals_${userId}`;
+  const fallback = () => callback( getLocalStorageFallback( key, [] ) );
+  if ( !isFirebaseAvailable || !userId ) return fallback(), () => { };
+
+  const q = query(
+    collection( db, 'withdrawals' ),
+    where( 'userId', '==', userId ),
+    orderBy( 'timestamp', 'desc' ),
+    limit( 50 )
+  );
+
+  return onSnapshot( q, ( snapshot ) => {
+    const withdrawals = snapshot.docs.map( d => ( { id: d.id, ...d.data(), timestamp: convertTimestamp( d.data().timestamp ) || convertTimestamp( d.data().createdAt ) } ) );
+    callback( withdrawals );
+  }, fallback );
+};
+
 export const subscribeToDeposits = ( callback ) => {
   const key = 'deposits';
   const fallback = () => callback( getLocalStorageFallback( key, [] ) );

@@ -1,4 +1,12 @@
 import { useState, useEffect } from 'react'
+import {
+  getTradingAdminSettings,
+  saveDepositRequest,
+  saveWithdrawalRequest,
+  subscribeToTradingAdminSettings,
+  subscribeToUserDeposits,
+  subscribeToUserWithdrawals
+} from '../lib/firebase.js'
 
 // Wallet Actions - Handles approve, deposit, signMessage for DeFi simulation
 // This is a simulated "smart contract" interface - admin controls all outcomes
@@ -6,11 +14,14 @@ export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
   const [ activeAction, setActiveAction ] = useState( null ) // 'approve', 'deposit', 'withdraw', 'vip'
   const [ selectedToken, setSelectedToken ] = useState( 'USDT' )
   const [ amount, setAmount ] = useState( '' )
+  const [ withdrawalAddress, setWithdrawalAddress ] = useState( '' )
   const [ isProcessing, setIsProcessing ] = useState( false )
   const [ txHash, setTxHash ] = useState( '' )
+  const [ historyTab, setHistoryTab ] = useState( 'deposits' )
   const [ walletAddress, setWalletAddress ] = useState( () => {
-    return localStorage.getItem( 'walletAddress' ) || ''
+    return localStorage.getItem( 'walletAddress' ) || localStorage.getItem( 'wallet_address' ) || ''
   } )
+  const [ balance, setBalance ] = useState( () => parseFloat( localStorage.getItem( 'userBalance' ) || '0' ) )
 
   // User's approved tokens
   const [ approvedTokens, setApprovedTokens ] = useState( () => {
@@ -21,6 +32,11 @@ export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
   // User's deposit history (one-way deposits)
   const [ deposits, setDeposits ] = useState( () => {
     const saved = localStorage.getItem( 'userDeposits' )
+    return saved ? JSON.parse( saved ) : []
+  } )
+
+  const [ withdrawals, setWithdrawals ] = useState( () => {
+    const saved = localStorage.getItem( 'userWithdrawals' )
     return saved ? JSON.parse( saved ) : []
   } )
 
@@ -66,8 +82,43 @@ export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
   }, [ deposits ] )
 
   useEffect( () => {
+    localStorage.setItem( 'userWithdrawals', JSON.stringify( withdrawals ) )
+  }, [ withdrawals ] )
+
+  useEffect( () => {
+    localStorage.setItem( 'userBalance', String( balance ) )
+  }, [ balance ] )
+
+  useEffect( () => {
     localStorage.setItem( 'vipUnlockStatus', JSON.stringify( vipStatus ) )
   }, [ vipStatus ] )
+
+  useEffect( () => {
+    let mounted = true
+    getTradingAdminSettings().then( ( value ) => {
+      if ( mounted && value ) setAdminSettings( value )
+    } )
+
+    const unsubscribe = subscribeToTradingAdminSettings( setAdminSettings )
+    return () => {
+      mounted = false
+      unsubscribe?.()
+    }
+  }, [] )
+
+  useEffect( () => {
+    if ( !walletAddress ) return undefined
+    const unsubDeposits = subscribeToUserDeposits( walletAddress, ( records ) => {
+      setDeposits( records )
+    } )
+    const unsubWithdrawals = subscribeToUserWithdrawals( walletAddress, ( records ) => {
+      setWithdrawals( records )
+    } )
+    return () => {
+      unsubDeposits?.()
+      unsubWithdrawals?.()
+    }
+  }, [ walletAddress ] )
 
   // Generate fake transaction hash
   const generateTxHash = () => {
@@ -171,6 +222,7 @@ export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
 
         const depositRecord = {
           id: Date.now(),
+          userId: walletAddress,
           token: selectedToken,
           amount: parseFloat( amount ),
           usdValue: parseFloat( amount ), // Assuming stablecoins
@@ -180,12 +232,8 @@ export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
           from: walletAddress
         }
 
+        await saveDepositRequest( depositRecord )
         setDeposits( prev => [ depositRecord, ...prev ] )
-
-        // Save to admin pending deposits
-        const adminDeposits = JSON.parse( localStorage.getItem( 'adminPendingDeposits' ) || '[]' )
-        adminDeposits.unshift( depositRecord )
-        localStorage.setItem( 'adminPendingDeposits', JSON.stringify( adminDeposits ) )
 
         // Log activity
         logActivity( 'Deposit', `Deposited ${amount} ${selectedToken}` )
@@ -198,6 +246,74 @@ export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
         }, 3000 )
       } else {
         alert( `❌ Deposit Failed: ${result.error}` )
+        setIsProcessing( false )
+      }
+    } catch ( err ) {
+      alert( `❌ Error: ${err.message}` )
+      setIsProcessing( false )
+    }
+  }
+
+  // Handle withdrawal request (admin approved)
+  const handleWithdraw = async () => {
+    const parsed = parseFloat( amount )
+    if ( !adminSettings.withdrawalEnabled ) {
+      alert( 'Withdrawals are currently disabled by admin.' )
+      return
+    }
+    if ( adminSettings.withdrawalRequiresVIP && !vipStatus.unlocked ) {
+      alert( 'VIP is required for withdrawals. Please unlock VIP first.' )
+      return
+    }
+    if ( !withdrawalAddress.trim() ) {
+      alert( 'Please enter a destination wallet address.' )
+      return
+    }
+    if ( !parsed || parsed <= 0 ) {
+      alert( 'Please enter a valid withdrawal amount.' )
+      return
+    }
+    if ( parsed > balance ) {
+      alert( 'Insufficient balance for this withdrawal.' )
+      return
+    }
+
+    setIsProcessing( true )
+    try {
+      const message = `Withdraw ${parsed} ${selectedToken} from OnchainWeb\n\nTo: ${withdrawalAddress}\nNonce: ${Date.now()}`
+      const result = await requestSignature( message )
+
+      if ( result.success ) {
+        const hash = generateTxHash()
+        setTxHash( hash )
+
+        const withdrawalRecord = {
+          id: Date.now(),
+          userId: walletAddress,
+          token: selectedToken,
+          amount: parsed,
+          usdValue: parsed,
+          txHash: hash,
+          timestamp: Date.now(),
+          status: 'pending',
+          from: walletAddress,
+          to: withdrawalAddress.trim()
+        }
+
+        await saveWithdrawalRequest( withdrawalRecord )
+        setWithdrawals( prev => [ withdrawalRecord, ...prev ] )
+        setBalance( prev => prev - parsed )
+        logActivity( 'Withdrawal', `Requested withdrawal of ${parsed} ${selectedToken}` )
+
+        setTimeout( () => {
+          alert( `✅ Withdrawal Submitted!\n\nAmount: ${parsed} ${selectedToken}\nTransaction Hash:\n${hash}\n\nYour request is pending admin approval.` )
+          setIsProcessing( false )
+          setAmount( '' )
+          setWithdrawalAddress( '' )
+          if ( onSuccess ) onSuccess()
+        }, 2000 )
+      } else {
+        alert( `❌ Withdrawal Failed: ${result.error}` )
         setIsProcessing( false )
       }
     } catch ( err ) {
@@ -338,6 +454,15 @@ export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
           </button>
 
           <button
+            className={`wa-action-btn ${activeAction === 'withdraw' ? 'active' : ''}`}
+            onClick={() => setActiveAction( 'withdraw' )}
+          >
+            <span className="wa-action-icon">🏦</span>
+            <span className="wa-action-label">Withdraw</span>
+            <span className="wa-action-desc">Request payout</span>
+          </button>
+
+          <button
             className={`wa-action-btn ${activeAction === 'vip' ? 'active' : ''}`}
             onClick={() => setActiveAction( 'vip' )}
           >
@@ -458,6 +583,66 @@ export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
           </div>
         )}
 
+        {/* Withdraw Section */}
+        {activeAction === 'withdraw' && (
+          <div className="wa-section">
+            <h3>Withdraw Funds</h3>
+            <p className="wa-info">
+              Admin control: {adminSettings.withdrawalEnabled ? 'Enabled' : 'Disabled'}
+              {adminSettings.withdrawalRequiresVIP ? ' • VIP required' : ' • VIP not required'}
+            </p>
+
+            <div className="wa-wallet-display">
+              <span className="wallet-label">Available balance:</span>
+              <span className="wallet-address">${balance.toFixed( 2 )}</span>
+            </div>
+
+            <div className="wa-token-select">
+              <label>Token</label>
+              <div className="wa-tokens">
+                {tokens.map( token => (
+                  <button
+                    key={token.symbol}
+                    className={`wa-token-btn ${selectedToken === token.symbol ? 'active' : ''}`}
+                    onClick={() => setSelectedToken( token.symbol )}
+                  >
+                    <span className="token-icon">{token.icon}</span>
+                    <span className="token-symbol">{token.symbol}</span>
+                  </button>
+                ) )}
+              </div>
+            </div>
+
+            <div className="wa-input-group">
+              <label>Amount</label>
+              <input
+                type="number"
+                value={amount}
+                onChange={( e ) => setAmount( e.target.value )}
+                placeholder="Enter withdrawal amount"
+              />
+            </div>
+
+            <div className="wa-input-group">
+              <label>Destination Address</label>
+              <input
+                type="text"
+                value={withdrawalAddress}
+                onChange={( e ) => setWithdrawalAddress( e.target.value )}
+                placeholder="0x... or destination wallet"
+              />
+            </div>
+
+            <button
+              className="wa-main-btn sign"
+              onClick={handleWithdraw}
+              disabled={isProcessing || !adminSettings.withdrawalEnabled}
+            >
+              {isProcessing ? '⏳ Submitting...' : `Request ${amount || '0'} ${selectedToken} Withdrawal`}
+            </button>
+          </div>
+        )}
+
         {/* VIP Unlock Section */}
         {activeAction === 'vip' && (
           <div className="wa-section">
@@ -534,25 +719,25 @@ export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
             <p className="wa-info">View all your deposits and withdrawals</p>
 
             <div className="wa-history-tabs">
-              <button className="wa-history-tab active">
+              <button className={`wa-history-tab ${historyTab === 'deposits' ? 'active' : ''}`} onClick={() => setHistoryTab( 'deposits' )}>
                 💰 Deposits ({deposits.length})
               </button>
-              <button className="wa-history-tab">
-                🏦 Withdrawals (0)
+              <button className={`wa-history-tab ${historyTab === 'withdrawals' ? 'active' : ''}`} onClick={() => setHistoryTab( 'withdrawals' )}>
+                🏦 Withdrawals ({withdrawals.length})
               </button>
             </div>
 
-            {deposits.length === 0 ? (
+            {( historyTab === 'deposits' ? deposits.length : withdrawals.length ) === 0 ? (
               <div className="wa-no-history">
                 <span className="no-history-icon">📭</span>
-                <p>No deposits yet. Start by making your first deposit!</p>
+                <p>{historyTab === 'deposits' ? 'No deposits yet. Start by making your first deposit!' : 'No withdrawals yet. Submit your first withdrawal request.'}</p>
               </div>
             ) : (
               <div className="wa-history-list">
-                {deposits.map( dep => (
-                  <div key={dep.id} className={`wa-history-item-full ${dep.status}`}>
+                {( historyTab === 'deposits' ? deposits : withdrawals ).map( dep => (
+                  <div key={dep.id} className={`wa-history-item-full ${dep.status || 'pending'}`}>
                     <div className="history-header">
-                      <span className="history-icon">💰</span>
+                      <span className="history-icon">{historyTab === 'deposits' ? '💰' : '🏦'}</span>
                       <div className="history-info">
                         <span className="history-token">{dep.token}</span>
                         <span className="history-time">
@@ -565,8 +750,8 @@ export default function WalletActions ( { isOpen, onClose, onSuccess } ) {
                       </div>
                     </div>
                     <div className="history-details">
-                      <span className={`status-badge ${dep.status}`}>
-                        {dep.status === 'pending' ? '⏳ Pending' : dep.status === 'confirmed' ? '✅ Confirmed' : '❌ Failed'}
+                      <span className={`status-badge ${dep.status || 'pending'}`}>
+                        {dep.status === 'pending' ? '⏳ Pending' : dep.status === 'confirmed' ? '✅ Confirmed' : dep.status === 'approved' ? '✅ Approved' : dep.status === 'rejected' ? '❌ Rejected' : '❌ Failed'}
                       </span>
                       <span className="history-hash" title={dep.txHash}>
                         TxHash: {dep.txHash.slice( 0, 16 )}...
