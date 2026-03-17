@@ -1,1 +1,26 @@
-{"name": "Dapp Dev (Node 20)", "image": "mcr.microsoft.com/devcontainers/universal:2", "features": {"ghcr.io/devcontainers/features/node": {"version": "20"}}, "workspaceFolder": "/workspaces/Dapp/Onchainweb", "postCreateCommand": "if [ -f package-lock.json ]; then npm ci; else npm install; fi", "postStartCommand": "npm run dev", "forwardPorts": [5173, 4173], "portsAttributes": {"5173": {"label": "Vite dev server", "onAutoForward": "openPreview"}, "4173": {"label": "Vite preview", "onAutoForward": "openPreview"}}, "customizations": {"vscode": {"extensions": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "farooque-dev.firebase-project-manager"]}}}
+{
+  "name": "Dapp Dev (Node 20)",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+    "ghcr.io/devcontainers/features/node": {
+      "version": "20"
+    }
+  },
+  "workspaceFolder": "/workspaces/Dapp/Onchainweb",
+  "postCreateCommand": "if [ -f package-lock.json ]; then npm ci; else npm install; fi",
+  "forwardPorts": [5173, 4173, 4000],
+  "portsAttributes": {
+    "5173": { "label": "Vite dev server", "onAutoForward": "openPreview" },
+    "4173": { "label": "Vite preview", "onAutoForward": "openPreview" },
+    "4000": { "label": "Firebase Emulator UI" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "farooque-dev.firebase-project-manager"
+      ]
+    }
+  }
+}

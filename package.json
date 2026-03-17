@@ -8,7 +8,8 @@
     "build": "cd Onchainweb && npm install && npm run build",
     "smoke": "bash scripts/smoke-test.sh",
     "dev": "cd Onchainweb && npm run dev",
-    "preview": "cd Onchainweb && npm run preview"
+    "preview": "cd Onchainweb && npm run preview",
+    "emulators": "npx firebase emulators:start"
   },
   "workspaces": [
     "Onchainweb"
@@ -19,5 +20,8 @@
     "defi"
   ],
   "author": "ddefi0175-netizen",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "firebase-tools": "^13.0.0"
+  }
 }

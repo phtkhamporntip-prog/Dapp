@@ -14,6 +14,26 @@ To get started with the project, follow these steps:
 
 For more detailed instructions, please refer to the `QUICK_START_GUIDE.md` document.
 
+## Codespaces / Dev Container
+
+The dev container installs dependencies automatically on creation but **does not auto-start the dev server** to keep the Codespace stable and prevent automatic disconnects.
+
+After the Codespace is ready, open a terminal and start services manually:
+
+```bash
+# Start the Vite frontend dev server (from the Onchainweb workspace folder)
+npm run dev
+
+# Start Firebase emulators for local backend/admin control
+# Run from repo root (cd /workspaces/Dapp if needed)
+cd /workspaces/Dapp
+npm run emulators
+```
+
+- Vite dev server → http://localhost:5173
+- Firebase Emulator UI → http://localhost:4000
+- Production build (unchanged): `npm run build`
+
 ## CI/CD & Deployment
 
 ### GitHub Actions Secrets
