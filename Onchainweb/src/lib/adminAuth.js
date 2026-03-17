@@ -53,23 +53,6 @@ const isEmailInAllowlist = (email) => {
  * @throws {Error} If login fails or the user is not an authorized admin.
  */
 export const handleAdminLogin = async (email, password, firebaseSignIn) => {
-  // ── Master account via environment variables ──────────────────────────────
-  // VITE_MASTER_ADMIN_USERNAME and VITE_MASTER_ADMIN_PASSWORD are set in
-  // Vercel / .env project settings. They allow login without Firebase Auth.
-  const masterUsername = import.meta.env.VITE_MASTER_ADMIN_USERNAME;
-  const masterPassword = import.meta.env.VITE_MASTER_ADMIN_PASSWORD;
-  if (
-    masterUsername && masterPassword &&
-    email.toLowerCase() === masterUsername.toLowerCase() &&
-    password === masterPassword
-  ) {
-    return {
-      user: { email: masterUsername, uid: 'master' },
-      role: 'master',
-      permissions: ['all'],
-    };
-  }
-
   if (!isEmailInAllowlist(email)) {
     throw new Error('Invalid credentials or unauthorized user.');
   }

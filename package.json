@@ -22,6 +22,10 @@
   "author": "ddefi0175-netizen",
   "license": "MIT",
   "devDependencies": {
-    "firebase-tools": "^13.0.0"
+    "firebase-tools": "^15.10.1"
+  },
+  "dependencies": {
+    "vite": "8.0.0",
+    "wrangler": "4.75.0"
   }
 }

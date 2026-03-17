@@ -1,9 +1,10 @@
 # 🔧 Fix Master Admin Login Issues
 
 **Status**: Configuration verified ✅
+
 - ✅ VITE_ENABLE_ADMIN=true
-- ✅ VITE_ADMIN_ALLOWLIST=master@gmail.com,admin@gmail.com
-- ✅ VITE_FIREBASE_PROJECT_ID=onchainweb-37d30
+- ✅ VITE_ADMIN_ALLOWLIST=phtkhamporntip@gmail.com,admin@gmail.com
+- ✅ VITE_FIREBASE_PROJECT_ID=onchainweb-dapp
 - ✅ Master-admin route registered
 
 ---
@@ -14,11 +15,11 @@
 
 **Error Message**: `Admin account not found in Firebase`
 
-**Root Cause**: The master@gmail.com account doesn't exist in Firebase Console
+**Root Cause**: The phtkhamporntip@gmail.com account doesn't exist in Firebase Console
 
 **Fix**:
 
-1. Go to Firebase Console: https://console.firebase.google.com/u/0/project/onchainweb-37d30
+1. Go to Firebase Console: https://console.firebase.google.com/u/0/project/onchainweb-dapp
 
 2. Click **Build** → **Authentication**
 
@@ -26,7 +27,7 @@
 
 4. Click **+ Add User** button
 
-5. **Email**: `master@gmail.com`
+5. **Email**: `phtkhamporntip@gmail.com`
 
 6. **Password**: Create a strong password (14+ characters recommended)
    - example: `SnipeMaster2026!SuperSecure`
@@ -41,18 +42,19 @@
 
 **Error Message**: `This email is not authorized for admin access`
 
-**Root Cause**: Email doesn't start with "master@" or is not in VITE_ADMIN_ALLOWLIST
+**Root Cause**: Email is not in VITE_ADMIN_ALLOWLIST
 
 **Fix**:
 
-1. Open `/workspaces/Snipe-/Onchainweb/.env`
+1. Open `/workspaces/Dapp/Onchainweb/.env`
 
 2. Find this line:
+
    ```
-   VITE_ADMIN_ALLOWLIST=master@gmail.com,admin@gmail.com
+   VITE_ADMIN_ALLOWLIST=phtkhamporntip@gmail.com,admin@gmail.com
    ```
 
-3. **Make sure it includes**: `master@gmail.com` (with the "master@" prefix)
+3. **Make sure it includes**: `phtkhamporntip@gmail.com`
 
 4. **Restart dev server** (see below)
 
@@ -61,6 +63,7 @@
 ### Issue 3: "Page won't load or shows blank screen"
 
 **Symptoms**:
+
 - Page is blank
 - Nothing loads
 - Loading spinner spins forever
@@ -72,12 +75,14 @@
 1. Stop the dev server (press **Ctrl+C** or **Cmd+C** in terminal)
 
 2. Clear Next.js cache:
+
    ```bash
-   cd /workspaces/Snipe-/Onchainweb
+   cd /workspaces/Dapp/Onchainweb
    rm -rf dist node_modules/.vite
    ```
 
 3. **Restart dev server**:
+
    ```bash
    npm run dev
    ```
@@ -99,16 +104,16 @@
 **Fix**:
 
 1. **Go to Firebase Console**:
-   - https://console.firebase.google.com/u/0/project/onchainweb-37d30
+   - https://console.firebase.google.com/u/0/project/onchainweb-dapp
 
 2. **Delete the old account** (if it exists):
    - Authentication → Users
-   - Click on master@gmail.com
+   - Click on phtkhamporntip@gmail.com
    - Click **Delete user** (⋮ menu)
 
 3. **Create new account**:
    - Click **+ Add User**
-   - Email: `master@gmail.com`
+   - Email: `phtkhamporntip@gmail.com`
    - Password: **Write down the exact password** - copy/paste from password manager
    - Click **Add user**
 
@@ -119,6 +124,7 @@
 ### Issue 5: "Firebase not initialized" or blank form
 
 **Error Message**:
+
 - `Firebase not initialized`
 - `Firebase authentication is not configured`
 - Login form doesn't appear
@@ -127,20 +133,21 @@
 
 **Fix**:
 
-1. Open `/workspaces/Snipe-/Onchainweb/.env`
+1. Open `/workspaces/Dapp/Onchainweb/.env`
 
 2. **Check these lines exist** (copy exact values):
+
    ```env
    VITE_FIREBASE_API_KEY=AIzaSyA56Pq_WcE6TehQDayLTZ0ibCHCwZkUUlw
-   VITE_FIREBASE_AUTH_DOMAIN=onchainweb-37d30.firebaseapp.com
-   VITE_FIREBASE_DATABASE_URL=https://onchainweb-37d30-default-rtdb.firebaseio.com
-   VITE_FIREBASE_PROJECT_ID=onchainweb-37d30
-   VITE_FIREBASE_STORAGE_BUCKET=onchainweb-37d30.firebasestorage.app
-   VITE_FIREBASE_MESSAGING_SENDER_ID=766146811888
-   VITE_FIREBASE_APP_ID=1:766146811888:web:883839b4a6987b0108ef35
+   VITE_FIREBASE_AUTH_DOMAIN=onchainweb-dapp.firebaseapp.com
+   VITE_FIREBASE_DATABASE_URL=https://onchainweb-dapp-default-rtdb.firebaseio.com
+   VITE_FIREBASE_PROJECT_ID=onchainweb-dapp
+   VITE_FIREBASE_STORAGE_BUCKET=onchainweb-dapp.firebasestorage.app
+   VITE_FIREBASE_MESSAGING_SENDER_ID=1032172642498
+   VITE_FIREBASE_APP_ID=1:1032172642498:web:your-app-id
    VITE_FIREBASE_MEASUREMENT_ID=G-2XBP804Q8Z
    VITE_ENABLE_ADMIN=true
-   VITE_ADMIN_ALLOWLIST=master@gmail.com,admin@gmail.com
+   VITE_ADMIN_ALLOWLIST=phtkhamporntip@gmail.com,admin@gmail.com
    ```
 
 3. If any are missing or different, update them
@@ -165,17 +172,20 @@
 **Common errors**:
 
 #### "ReferenceError: auth is not defined"
+
 - Means Firebase didn't initialize
-- Fix: Check all VITE_FIREBASE_* vars in .env
+- Fix: Check all VITE*FIREBASE*\* vars in .env
 - Restart dev server
 
 #### "TypeError: firebaseSignIn is not a function"
+
 - Means import is broken
 - Fix: Check /src/lib/firebase.js exists and exports correctly
 - Restart dev server and hard refresh
 
 #### "auth/user-not-found"
-- Means master@gmail.com doesn't exist in Firebase
+
+- Means phtkhamporntip@gmail.com doesn't exist in Firebase
 - Fix: Go to Firebase Console → Authentication → Create the user
 
 ---
@@ -185,15 +195,16 @@
 ### Step 1: Verify Firebase Account
 
 ```bash
-cd /workspaces/Snipe-
+cd /workspaces/Dapp
 # Open this in browser:
-# https://console.firebase.google.com/u/0/project/onchainweb-37d30
+# https://console.firebase.google.com/u/0/project/onchainweb-dapp
 ```
 
 **In Firebase Console**:
+
 - Build → Authentication → Users
 - Click **+ Add User**
-- Email: `master@gmail.com`
+- Email: `phtkhamporntip@gmail.com`
 - Password: `TestPassword123!` (use a simple password for testing)
 - Click **Add user**
 - Wait for it to appear in the Users list ✓
@@ -201,17 +212,18 @@ cd /workspaces/Snipe-
 ### Step 2: Verify Environment Variables
 
 ```bash
-cd /workspaces/Snipe-/Onchainweb
+cd /workspaces/Dapp/Onchainweb
 cat .env | grep VITE
 ```
 
 **Should show** (9 lines):
+
 ```
 VITE_FIREBASE_API_KEY=AIzaSyA56Pq_WcE6TehQDayLTZ0ibCHCwZkUUlw
-VITE_FIREBASE_AUTH_DOMAIN=onchainweb-37d30.firebaseapp.com
+VITE_FIREBASE_AUTH_DOMAIN=onchainweb-dapp.firebaseapp.com
 ...
 VITE_ENABLE_ADMIN=true
-VITE_ADMIN_ALLOWLIST=master@gmail.com,admin@gmail.com
+VITE_ADMIN_ALLOWLIST=phtkhamporntip@gmail.com,admin@gmail.com
 ```
 
 ### Step 3: Clear Cache & Restart Dev Server
@@ -224,6 +236,7 @@ npm run dev
 ```
 
 **Wait for**:
+
 ```
 ✓ built in 17.04s
 Local:     http://localhost:5173/
@@ -232,13 +245,14 @@ Local:     http://localhost:5173/
 ### Step 4: Open Master Admin
 
 In browser:
+
 ```
 http://localhost:5173/master-admin
 ```
 
 ### Step 5: Test Login
 
-**Email**: `master@gmail.com`
+**Email**: `phtkhamporntip@gmail.com`
 **Password**: `TestPassword123!` (what you created in Step 1)
 
 Click **Login**
@@ -262,7 +276,7 @@ Click **Login**
 Run this diagnostic command:
 
 ```bash
-cd /workspaces/Snipe-
+cd /workspaces/Dapp
 echo "=== Firebase Config ==="
 cat Onchainweb/.env | grep VITE_FIREBASE | head -1
 echo "=== Admin Enabled ==="
@@ -285,9 +299,9 @@ Before trying to login, confirm:
 
 - [ ] Firebase Authentication is enabled (Build → Authentication)
 - [ ] Email/Password provider is enabled (Authentication → Sign-in method)
-- [ ] master@gmail.com account exists (Authentication → Users)
+- [ ] phtkhamporntip@gmail.com account exists (Authentication → Users)
 - [ ] VITE_ENABLE_ADMIN=true in .env
-- [ ] master@gmail.com is in VITE_ADMIN_ALLOWLIST
+- [ ] phtkhamporntip@gmail.com is in VITE_ADMIN_ALLOWLIST
 - [ ] Dev server restarted after .env changes
 - [ ] Browser hard refreshed (Ctrl+Shift+R or Cmd+Shift+R)
 - [ ] No red errors in browser console (F12)
@@ -301,7 +315,7 @@ Before trying to login, confirm:
 pkill -f "npm run dev" 2>/dev/null || true
 
 # 2. Navigate to project
-cd /workspaces/Snipe-/Onchainweb
+cd /workspaces/Dapp/Onchainweb
 
 # 3. Clear caches
 rm -rf dist node_modules/.vite .vite 2>/dev/null || true
@@ -311,7 +325,7 @@ npm run dev
 
 # In another terminal, test:
 # Open: http://localhost:5173/master-admin
-# Email: master@gmail.com
+# Email: phtkhamporntip@gmail.com
 # Password: (whatever you created in Firebase Console)
 ```
 

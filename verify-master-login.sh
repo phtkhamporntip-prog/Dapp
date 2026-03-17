@@ -63,6 +63,8 @@ echo ""
 
 # Admin Configuration
 check_env_var "VITE_ENABLE_ADMIN" "$VITE_ENABLE_ADMIN" || has_errors=1
+check_env_var "VITE_ADMIN_ROUTE" "$VITE_ADMIN_ROUTE" || has_errors=1
+check_env_var "VITE_MASTER_ADMIN_ROUTE" "$VITE_MASTER_ADMIN_ROUTE" || has_errors=1
 check_env_var "VITE_ADMIN_ALLOWLIST" "$VITE_ADMIN_ALLOWLIST" || has_errors=1
 
 echo ""
@@ -81,17 +83,23 @@ echo ""
 # Extract master email from allowlist
 if [ -n "$VITE_ADMIN_ALLOWLIST" ]; then
     MASTER_EMAIL=$(echo "$VITE_ADMIN_ALLOWLIST" | cut -d',' -f1 | tr -d ' ')
-    
-    if [[ $MASTER_EMAIL == master@* ]]; then
-        echo -e "${GREEN}✓${NC} Master account email configured: ${GREEN}$MASTER_EMAIL${NC}"
+
+    if [[ $MASTER_EMAIL == *"@"* ]]; then
+        echo -e "${GREEN}✓${NC} Primary admin email configured: ${GREEN}$MASTER_EMAIL${NC}"
     else
-        echo -e "${YELLOW}⚠${NC} First email in allowlist doesn't start with 'master@'"
-        echo "  Recommended format: master@yourdomain.com"
+        echo -e "${RED}✗${NC} First value in allowlist is not a valid email"
         echo "  Current: $MASTER_EMAIL"
+        has_errors=1
     fi
 else
     echo -e "${RED}✗ No emails in VITE_ADMIN_ALLOWLIST${NC}"
     has_errors=1
+fi
+
+# Route safety checks (private routes recommended in production)
+if [ "$VITE_ADMIN_ROUTE" = "/admin" ] || [ "$VITE_MASTER_ADMIN_ROUTE" = "/master-admin" ]; then
+    echo -e "${YELLOW}⚠${NC} Admin routes are using public defaults"
+    echo "  Recommended: private routes like /internal-admin and /internal-master"
 fi
 
 echo ""
@@ -106,8 +114,8 @@ if [ $has_errors -eq 0 ]; then
     echo "   Domain: $VITE_FIREBASE_AUTH_DOMAIN"
     echo ""
     echo "🌐 Access URLs:"
-    echo "   Master Dashboard: ${VITE_APP_URL:-http://localhost:5173}/master-admin"
-    echo "   Admin Dashboard:  ${VITE_APP_URL:-http://localhost:5173}/admin"
+    echo "   Master Dashboard: ${VITE_APP_URL:-http://localhost:5173}${VITE_MASTER_ADMIN_ROUTE}"
+    echo "   Admin Dashboard:  ${VITE_APP_URL:-http://localhost:5173}${VITE_ADMIN_ROUTE}"
     echo ""
     echo "📝 Next Steps:"
     echo "   1. Make sure master account is created in Firebase Console"

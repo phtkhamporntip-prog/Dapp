@@ -12,30 +12,33 @@
 
 The Snipe platform uses the following domains for master account access:
 
-| Domain Type | URL | Purpose |
-|-------------|-----|---------|
-| **Primary Production** | `https://onchainweb.site` | Main deployment domain (Vercel) |
-| **Alternative Production** | `https://www.onchainweb.app` | Alternative production URL |
-| **Master Admin Dashboard** | `https://onchainweb.site/master-admin` | Master account login page |
-| **Regular Admin Dashboard** | `https://onchainweb.site/admin` | Regular admin login page |
+| Domain Type                 | URL                                    | Purpose                         |
+| --------------------------- | -------------------------------------- | ------------------------------- |
+| **Primary Production**      | `https://onchainweb.site`              | Main deployment domain (Vercel) |
+| **Alternative Production**  | `https://www.onchainweb.app`           | Alternative production URL      |
+| **Master Admin Dashboard**  | `https://onchainweb.site/master-admin` | Master account login page       |
+| **Regular Admin Dashboard** | `https://onchainweb.site/admin`        | Regular admin login page        |
 
 ### Firebase Auth Domain
 
 The Firebase authentication domain is configured via:
+
 - **Environment Variable**: `VITE_FIREBASE_AUTH_DOMAIN`
 - **Format**: `your-project-id.firebaseapp.com`
-- **Example**: `onchainweb-37d30.firebaseapp.com`
+- **Example**: `onchainweb-dapp.firebaseapp.com`
 
 ### Email Domain Configuration
 
 Master account emails must use **REAL email domains** (not fake domains):
 
 ✅ **Valid Email Domains:**
+
 - `master@onchainweb.site` (recommended for production)
-- `master@gmail.com`
+- `phtkhamporntip@gmail.com`
 - `master@yourdomain.com`
 
 ❌ **Invalid Email Domains (Firebase will reject):**
+
 - `master@admin.onchainweb.app` (fake domain)
 - `master@admin.local` (fake domain)
 - Any non-existent email domains
@@ -68,13 +71,13 @@ Access Granted → Master Dashboard
 
 ### Login Components
 
-| Component | File Location | Purpose |
-|-----------|---------------|---------|
-| **Route Guard** | `Onchainweb/src/components/AdminRouteGuard.jsx` | Protects admin routes |
-| **Login UI** | `Onchainweb/src/components/AdminLogin.jsx` | Login form |
-| **Auth Logic** | `Onchainweb/src/lib/adminAuth.js` | Authentication handling |
-| **Admin Service** | `Onchainweb/src/services/adminService.js` | Firebase operations |
-| **Master Setup** | `Onchainweb/src/components/MasterAccountSetup.jsx` | Initial setup |
+| Component         | File Location                                      | Purpose                 |
+| ----------------- | -------------------------------------------------- | ----------------------- |
+| **Route Guard**   | `Onchainweb/src/components/AdminRouteGuard.jsx`    | Protects admin routes   |
+| **Login UI**      | `Onchainweb/src/components/AdminLogin.jsx`         | Login form              |
+| **Auth Logic**    | `Onchainweb/src/lib/adminAuth.js`                  | Authentication handling |
+| **Admin Service** | `Onchainweb/src/services/adminService.js`          | Firebase operations     |
+| **Master Setup**  | `Onchainweb/src/components/MasterAccountSetup.jsx` | Initial setup           |
 
 ---
 
@@ -138,6 +141,7 @@ Navigate to: `https://onchainweb.site/master-admin`
 #### Step 3: Verification
 
 The system performs these checks:
+
 1. ✅ Email is in `VITE_ADMIN_ALLOWLIST`
 2. ✅ Firebase Auth user exists
 3. ✅ Firestore admin document exists
@@ -156,22 +160,26 @@ Master accounts are created using the `initializeMasterAccount` function:
 // Location: Onchainweb/src/services/adminService.js
 export const initializeMasterAccount = async (email, password) => {
   // Step 1: Create Firebase Auth user
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  const userCredential = await createUserWithEmailAndPassword(
+    auth,
+    email,
+    password,
+  );
   const { user } = userCredential;
-  
+
   // Step 2: Create Firestore admin document
-  const adminId = user.uid;  // Uses UID as document ID
-  const adminRef = doc(db, 'admins', adminId);
-  
+  const adminId = user.uid; // Uses UID as document ID
+  const adminRef = doc(db, "admins", adminId);
+
   await setDoc(adminRef, {
     email: user.email,
     uid: user.uid,
-    role: 'master',
-    permissions: ['all'],
-    createdAt: new Date().toISOString()
+    role: "master",
+    permissions: ["all"],
+    createdAt: new Date().toISOString(),
   });
-  
-  return { success: true, message: 'Master account created successfully!' };
+
+  return { success: true, message: "Master account created successfully!" };
 };
 ```
 
@@ -226,11 +234,11 @@ VITE_ADMIN_ALLOWLIST=master@onchainweb.site,admin1@company.com,admin2@company.co
 
 ### Role-Based Access Control
 
-| Role | Permissions | Capabilities |
-|------|-------------|--------------|
-| **master** | `["all"]` | Full platform control, create admins, all features |
-| **admin** | `[specific permissions]` | Limited permissions based on assignment |
-| **user** | None | Regular user access only |
+| Role       | Permissions              | Capabilities                                       |
+| ---------- | ------------------------ | -------------------------------------------------- |
+| **master** | `["all"]`                | Full platform control, create admins, all features |
+| **admin**  | `[specific permissions]` | Limited permissions based on assignment            |
+| **user**   | None                     | Regular user access only                           |
 
 ### Document ID Strategy
 
@@ -240,10 +248,14 @@ VITE_ADMIN_ALLOWLIST=master@onchainweb.site,admin1@company.com,admin2@company.co
 
 ```javascript
 // Creation: doc ID = Firebase Auth UID
-const adminRef = doc(db, 'admins', user.uid);
+const adminRef = doc(db, "admins", user.uid);
 
 // Retrieval: Query by email field
-const q = query(collection(db, 'admins'), where('email', '==', email), limit(1));
+const q = query(
+  collection(db, "admins"),
+  where("email", "==", email),
+  limit(1),
+);
 ```
 
 ---
@@ -255,6 +267,7 @@ const q = query(collection(db, 'admins'), where('email', '==', email), limit(1))
 **Cause**: `VITE_ENABLE_ADMIN` not set to `true`
 
 **Solution**:
+
 ```bash
 # In .env file
 VITE_ENABLE_ADMIN=true
@@ -265,6 +278,7 @@ VITE_ENABLE_ADMIN=true
 **Cause**: Email not in `VITE_ADMIN_ALLOWLIST`
 
 **Solution**:
+
 ```bash
 # Add email to allowlist
 VITE_ADMIN_ALLOWLIST=master@onchainweb.site
@@ -275,6 +289,7 @@ VITE_ADMIN_ALLOWLIST=master@onchainweb.site
 **Cause**: No Firestore document exists for the email
 
 **Solution**:
+
 1. Use the master account setup form
 2. Or manually create document in Firebase Console
 
@@ -283,8 +298,9 @@ VITE_ADMIN_ALLOWLIST=master@onchainweb.site
 **Cause**: Using fake email domain (e.g., `@admin.onchainweb.app`)
 
 **Solution**: Use real email domain:
+
 - ✅ `master@onchainweb.site`
-- ✅ `master@gmail.com`
+- ✅ `phtkhamporntip@gmail.com`
 - ❌ `master@admin.onchainweb.app`
 
 ---
@@ -294,30 +310,35 @@ VITE_ADMIN_ALLOWLIST=master@onchainweb.site
 As master account, you have full access to:
 
 ### User Management
+
 - ✅ View all users in real-time
 - ✅ Edit user profiles and balances
 - ✅ Freeze/unfreeze accounts
 - ✅ Manage KYC status
 
 ### Admin Management
+
 - ✅ Create new admin accounts
 - ✅ Grant/revoke permissions
 - ✅ Assign specific permissions
 - ✅ Delete admin accounts
 
 ### Financial Operations
+
 - ✅ Approve/reject deposits
 - ✅ Process withdrawals
 - ✅ Adjust user balances
 - ✅ View transaction history
 
 ### System Control
+
 - ✅ Monitor platform activity
 - ✅ View admin action logs
 - ✅ Configure platform settings
 - ✅ Manage trading parameters
 
 ### Reporting & Analytics
+
 - ✅ Access analytics dashboard
 - ✅ View user statistics
 - ✅ Monitor platform health
@@ -329,22 +350,22 @@ As master account, you have full access to:
 
 ### Environment Configuration
 
-| File | Location | Purpose |
-|------|----------|---------|
-| `.env.example` | Repository root | Template with all variables |
-| `.env` | Repository root (gitignored) | Actual configuration |
-| `.env.production.example` | Repository root | Production template |
+| File                      | Location                     | Purpose                     |
+| ------------------------- | ---------------------------- | --------------------------- |
+| `.env.example`            | Repository root              | Template with all variables |
+| `.env`                    | Repository root (gitignored) | Actual configuration        |
+| `.env.production.example` | Repository root              | Production template         |
 
 ### Key Code Files
 
-| File | Purpose |
-|------|---------|
-| `adminAuth.js` | Authentication logic and role verification |
-| `adminService.js` | Firebase operations for admin management |
-| `AdminRouteGuard.jsx` | Protected route component |
-| `AdminLogin.jsx` | Login form component |
-| `MasterAccountSetup.jsx` | Initial master account creation |
-| `MasterAdminDashboard.jsx` | Master dashboard UI |
+| File                       | Purpose                                    |
+| -------------------------- | ------------------------------------------ |
+| `adminAuth.js`             | Authentication logic and role verification |
+| `adminService.js`          | Firebase operations for admin management   |
+| `AdminRouteGuard.jsx`      | Protected route component                  |
+| `AdminLogin.jsx`           | Login form component                       |
+| `MasterAccountSetup.jsx`   | Initial master account creation            |
+| `MasterAdminDashboard.jsx` | Master dashboard UI                        |
 
 ---
 
@@ -361,11 +382,13 @@ As master account, you have full access to:
 ## 📞 Support & Resources
 
 ### Production URLs
+
 - **Website**: https://onchainweb.site
 - **Master Dashboard**: https://onchainweb.site/master-admin
 - **Admin Dashboard**: https://onchainweb.site/admin
 
 ### Documentation
+
 - Quick Start: `docs/quickstart/README.md`
 - Admin Guide: `docs/admin/ADMIN_SETUP_GUIDE.md`
 - Security: `SECURITY.md`
@@ -375,6 +398,7 @@ As master account, you have full access to:
 ## ✅ Quick Checklist
 
 **To login as master account:**
+
 - [ ] Email is in `VITE_ADMIN_ALLOWLIST`
 - [ ] `VITE_ENABLE_ADMIN=true` in environment
 - [ ] Firebase Auth user exists with the email

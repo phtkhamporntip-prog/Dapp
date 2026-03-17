@@ -1,2 +1,4 @@
 specVersion: v1
-serviceAccount: firebase-adminsdk-onchainweb-37d30@onchainweb-37d30.iam.gserviceaccount.com
+# Data Connect requires a service account email (not a personal Gmail address).
+# Grant phtkhamporntip@gmail.com IAM access to manage Data Connect in console/CLI.
+serviceAccount: firebase-adminsdk-onchainweb-dapp@onchainweb-dapp.iam.gserviceaccount.com

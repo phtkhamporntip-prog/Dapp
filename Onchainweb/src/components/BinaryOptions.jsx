@@ -44,6 +44,7 @@ export default function BinaryOptions ( { isOpen = true, onClose } ) {
     const [ direction, setDirection ] = useState( 'up' );
     const [ activeTrades, setActiveTrades ] = useState( [] );
     const [ tradeHistory, setTradeHistory ] = useState( [] );
+    const [ now, setNow ] = useState( () => Date.now() );
     const settlingTradesRef = useRef( new Set() );
 
     const currentPage = getPageFromPath( location.pathname );
@@ -103,49 +104,52 @@ export default function BinaryOptions ( { isOpen = true, onClose } ) {
         localStorage.setItem( 'userBalance', String( balance ) );
     }, [ balance ] );
 
+    useEffect( () => {
+        if ( activeTrades.length === 0 ) return undefined;
+        setNow( Date.now() );
+        const intervalId = setInterval( () => setNow( Date.now() ), 1000 );
+        return () => clearInterval( intervalId );
+    }, [ activeTrades.length ] );
+
     const displayTrades = useMemo( () => {
         return activeTrades.map( ( trade ) => ( {
             ...trade,
-            timeLeft: Math.max( 0, ( trade.expiryTime || 0 ) - Date.now() ),
+            timeLeft: Math.max( 0, ( trade.expiryTime || 0 ) - now ),
             currentPrice: marketBySymbol[ getAssetSymbol( trade.pair ).toUpperCase() ]?.current_price || trade.entryPrice
         } ) );
-    }, [ activeTrades, marketBySymbol ] );
+    }, [ activeTrades, marketBySymbol, now ] );
 
     useEffect( () => {
         if ( displayTrades.length === 0 ) return undefined;
 
-        const intervalId = setInterval( () => {
-            displayTrades.forEach( ( trade ) => {
-                const shouldSettle = trade.timeLeft <= 0 || Boolean( trade.forcedOutcome );
-                if ( !shouldSettle || settlingTradesRef.current.has( trade.id ) ) return;
+        displayTrades.forEach( ( trade ) => {
+            const shouldSettle = trade.timeLeft <= 0 || Boolean( trade.forcedOutcome );
+            if ( !shouldSettle || settlingTradesRef.current.has( trade.id ) ) return;
 
-                settlingTradesRef.current.add( trade.id );
-                const livePrice = marketBySymbol[ getAssetSymbol( trade.pair ).toUpperCase() ]?.current_price || trade.entryPrice;
-                let won;
-                if ( trade.forcedOutcome === 'WIN' ) {
-                    won = true;
-                } else if ( trade.forcedOutcome === 'LOSS' ) {
-                    won = false;
-                } else {
-                    won = trade.direction === 'up' ? livePrice > trade.entryPrice : livePrice < trade.entryPrice;
-                }
-                const payout = won ? Number( ( trade.amount * ( 1 + trade.payoutRate ) ).toFixed( 2 ) ) : 0;
+            settlingTradesRef.current.add( trade.id );
+            const livePrice = marketBySymbol[ getAssetSymbol( trade.pair ).toUpperCase() ]?.current_price || trade.entryPrice;
+            let won;
+            if ( trade.forcedOutcome === 'WIN' ) {
+                won = true;
+            } else if ( trade.forcedOutcome === 'LOSS' ) {
+                won = false;
+            } else {
+                won = trade.direction === 'up' ? livePrice > trade.entryPrice : livePrice < trade.entryPrice;
+            }
+            const payout = won ? Number( ( trade.amount * ( 1 + trade.payoutRate ) ).toFixed( 2 ) ) : 0;
 
-                closeBinaryTrade( userId, trade, won ? 'WIN' : 'LOSS', payout )
-                    .then( () => {
-                        setBalance( ( prev ) => prev + payout );
-                        setToast( {
-                            message: `${trade.pair} ${won ? 'won' : 'lost'}${trade.forcedOutcome ? ' (admin override)' : ` at ${livePrice.toFixed( 2 )}`}`,
-                            type: won ? 'success' : 'error'
-                        } );
-                    } )
-                    .finally( () => {
-                        settlingTradesRef.current.delete( trade.id );
+            closeBinaryTrade( userId, trade, won ? 'WIN' : 'LOSS', payout )
+                .then( () => {
+                    setBalance( ( prev ) => prev + payout );
+                    setToast( {
+                        message: `${trade.pair} ${won ? 'won' : 'lost'}${trade.forcedOutcome ? ' (admin override)' : ` at ${livePrice.toFixed( 2 )}`}`,
+                        type: won ? 'success' : 'error'
                     } );
-            } );
-        }, 500 );
-
-        return () => clearInterval( intervalId );
+                } )
+                .finally( () => {
+                    settlingTradesRef.current.delete( trade.id );
+                } );
+        } );
     }, [ displayTrades, marketBySymbol, userId ] );
 
     const showToast = ( message, type = 'info' ) => {

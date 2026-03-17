@@ -70,6 +70,82 @@ const normalizeTradingAdminSettings = ( settings = {} ) => ( {
 
 const convertTimestamp = ( ts ) => ts?.toMillis?.() || ts;
 
+const emitLocalRealtimeUpdate = ( eventName ) => {
+  if ( typeof window !== 'undefined' ) {
+    window.dispatchEvent( new CustomEvent( eventName ) );
+  }
+};
+
+const mapAiInvestment = ( record ) => {
+  const data = typeof record.data === 'function' ? record.data() : record;
+  const id = record.id || data.id;
+  return {
+    id,
+    ...data,
+    startTime: convertTimestamp( data.startTime ),
+    endTime: convertTimestamp( data.endTime ),
+    completedAt: convertTimestamp( data.completedAt ),
+    createdAt: convertTimestamp( data.createdAt )
+  };
+};
+
+const sortAiInvestments = ( items ) => {
+  return [ ...items ].sort( ( left, right ) => {
+    const leftTime = left.completedAt || left.endTime || left.startTime || left.createdAt || 0;
+    const rightTime = right.completedAt || right.endTime || right.startTime || right.createdAt || 0;
+    return rightTime - leftTime;
+  } );
+};
+
+const subscribeToAiArbitrageRecords = ( callback, options = {} ) => {
+  const investmentsKey = 'aiArbitrageInvestments';
+  const {
+    userId = localStorage.getItem( 'walletAddress' ) || localStorage.getItem( 'wallet_address' ),
+    completed,
+    limitRecords = 50
+  } = options;
+
+  const emitLocal = () => {
+    const investments = getLocalStorageFallback( investmentsKey, [] );
+    const filtered = sortAiInvestments( investments.filter( ( investment ) => {
+      if ( userId && investment.userId !== userId ) return false;
+      if ( typeof completed === 'boolean' && Boolean( investment.completed ) !== completed ) return false;
+      return true;
+    } ) ).slice( 0, limitRecords );
+    callback( filtered );
+  };
+
+  if ( !isFirebaseAvailable ) {
+    emitLocal();
+    const handleStorage = ( event ) => {
+      if ( event.key === investmentsKey ) emitLocal();
+    };
+    const handleCustomUpdate = () => emitLocal();
+    window.addEventListener( 'storage', handleStorage );
+    window.addEventListener( 'ai-arbitrage-updated', handleCustomUpdate );
+    return () => {
+      window.removeEventListener( 'storage', handleStorage );
+      window.removeEventListener( 'ai-arbitrage-updated', handleCustomUpdate );
+    };
+  }
+
+  const filters = [];
+  if ( userId ) filters.push( where( 'userId', '==', userId ) );
+  if ( typeof completed === 'boolean' ) filters.push( where( 'completed', '==', completed ) );
+
+  const recordsQuery = filters.length > 0
+    ? query( collection( db, 'aiArbitrageInvestments' ), ...filters )
+    : query( collection( db, 'aiArbitrageInvestments' ) );
+
+  return onSnapshot( recordsQuery, ( snapshot ) => {
+    const investments = sortAiInvestments( snapshot.docs.map( mapAiInvestment ) ).slice( 0, limitRecords );
+    callback( investments );
+  }, ( error ) => {
+    console.error( 'AI Arbitrage subscription error:', error );
+    emitLocal();
+  } );
+};
+
 export const subscribeToTradeUpdates = ( tradeId, callback ) => {
   const fallback = () => {
     const activeTrades = getLocalStorageFallback( 'activeTrades', [] );
@@ -126,6 +202,7 @@ export const saveAiArbitrageInvestment = async ( investment ) => {
       investments.push( { ...investment, id: Date.now().toString() } );
     }
     localStorage.setItem( investmentsKey, JSON.stringify( investments ) );
+    emitLocalRealtimeUpdate( 'ai-arbitrage-updated' );
     return;
   }
   try {
@@ -200,36 +277,22 @@ export const subscribeToTradingAdminSettings = ( callback ) => {
 };
 
 export const subscribeToAiArbitrageInvestments = ( callback ) => {
-  const investmentsKey = 'aiArbitrageInvestments';
-  const userId = localStorage.getItem( 'walletAddress' ) || localStorage.getItem( 'wallet_address' );
-  const fallback = () => {
-    const investments = getLocalStorageFallback( investmentsKey, [] );
-    const userInvestments = investments.filter( inv => inv.userId === userId && !inv.completed );
-    callback( userInvestments );
-  };
+  return subscribeToAiArbitrageRecords( callback, { completed: false } );
+};
 
-  if ( !isFirebaseAvailable || !userId ) {
-    fallback();
-    return () => { };
-  }
+export const subscribeToAiArbitrageHistory = ( userId, callback, options = {} ) => {
+  return subscribeToAiArbitrageRecords( callback, {
+    userId,
+    completed: true,
+    limitRecords: options.limitRecords || 50
+  } );
+};
 
-  const q = query(
-    collection( db, 'aiArbitrageInvestments' ),
-    where( 'userId', '==', userId ),
-    where( 'completed', '==', false )
-  );
-
-  return onSnapshot( q, ( snapshot ) => {
-    const investments = snapshot.docs.map( d => ( {
-      id: d.id,
-      ...d.data(),
-      startTime: convertTimestamp( d.data().startTime ),
-      endTime: convertTimestamp( d.data().endTime ),
-    } ) );
-    callback( investments );
-  }, ( error ) => {
-    console.error( "AI Arbitrage subscription error:", error );
-    fallback();
+export const subscribeToAllAiArbitrageInvestments = ( callback, options = {} ) => {
+  return subscribeToAiArbitrageRecords( callback, {
+    userId: null,
+    completed: options.completed,
+    limitRecords: options.limitRecords || 100
   } );
 };
 
@@ -410,11 +473,8 @@ export const saveTradeHistory = async ( tradeRecord ) => {
 
 export const firebaseSignIn = async ( email, password ) => {
   if ( !isFirebaseAvailable ) {
-    // This is a placeholder for local storage-based authentication
-    if ( email === 'admin' && password === 'password' ) {
-      return { user: { email } };
-    }
-    throw new Error( 'Invalid credentials' );
+    // Never allow hardcoded fallback credentials in public builds.
+    throw new Error( 'Firebase authentication is not configured' );
   }
   return await signInWithEmailAndPassword( auth, email, password );
 };
@@ -455,6 +515,7 @@ export const saveDepositRequest = async ( deposit ) => {
     const userDeposits = getLocalStorageFallback( userDepositsKey, [] );
     userDeposits.unshift( normalized );
     localStorage.setItem( userDepositsKey, JSON.stringify( userDeposits ) );
+    emitLocalRealtimeUpdate( 'deposit-request-updated' );
     return normalized;
   }
 
@@ -484,6 +545,7 @@ export const saveWithdrawalRequest = async ( withdrawal ) => {
     const userWithdrawals = getLocalStorageFallback( userWithdrawalsKey, [] );
     userWithdrawals.unshift( normalized );
     localStorage.setItem( userWithdrawalsKey, JSON.stringify( userWithdrawals ) );
+    emitLocalRealtimeUpdate( 'withdrawal-request-updated' );
     return normalized;
   }
 

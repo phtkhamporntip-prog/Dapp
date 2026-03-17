@@ -1,4 +1,3 @@
-
 # Onchainweb
 
 Welcome to the Onchainweb project, a cutting-edge web3 trading platform. This document provides a comprehensive overview of the project, setup instructions, and key development guidelines.
@@ -34,6 +33,35 @@ npm run emulators
 Or use the VS Code task **"Dev: start frontend + emulators"** to launch both in parallel.
 
 ## CI/CD & Deployment
+
+### One-Command Vercel Production Deploy
+
+Use the secure deploy script to publish and verify core routes:
+
+```bash
+export VERCEL_TOKEN=your_vercel_token
+chmod +x scripts/vercel-deploy-and-verify.sh
+./scripts/vercel-deploy-and-verify.sh
+```
+
+Important: run each command separately. Do not append `gh release ...` directly to the same line as the deploy script.
+
+### One-Command Public Release
+
+This runs deploy verification and then creates the GitHub release:
+
+```bash
+export VERCEL_TOKEN=your_vercel_token
+chmod +x scripts/public-release.sh
+./scripts/public-release.sh v1.0.0
+```
+
+What it verifies after deployment:
+
+- Main app route `/`
+- Customer support route `/customer-service`
+- Admin route from `VITE_ADMIN_ROUTE` (default `/internal-admin`)
+- Master admin route from `VITE_MASTER_ADMIN_ROUTE` (default `/internal-master`)
 
 ### GitHub Actions Secrets
 
@@ -86,6 +114,7 @@ To learn more about the AI's capabilities and how to interact with it, please re
 - **Environment Variables**: `docs/ENVIRONMENT_VARIABLES.md`
 
 ### Admin & Management
+
 - **Admin Features Review**: `ADMIN_FEATURES_REVIEW.md` - Comprehensive review of admin features and login functionality
 - **Admin Review Summary**: `ADMIN_REVIEW_SUMMARY.md` - Executive summary and quick reference
 - **Admin Setup**: `docs/admin/ADMIN_SETUP_GUIDE.md` - Complete admin setup guide

@@ -20,6 +20,8 @@ const requiredEnvVars = [
 
 const adminEnvVars = [
   'VITE_ENABLE_ADMIN',
+  'VITE_ADMIN_ROUTE',
+  'VITE_MASTER_ADMIN_ROUTE',
   'VITE_ADMIN_ALLOWLIST'
 ];
 
@@ -52,6 +54,18 @@ export function validateEnvironment() {
       console.warn('Admin feature enabled but missing configuration:', missingAdmin);
       console.warn('Admin routes may not work properly. Please configure:', 
         missingAdmin.join(', '));
+    }
+
+    const adminRoute = (import.meta.env.VITE_ADMIN_ROUTE || '').trim();
+    const masterRoute = (import.meta.env.VITE_MASTER_ADMIN_ROUTE || '').trim();
+    const allowlist = (import.meta.env.VITE_ADMIN_ALLOWLIST || '').trim();
+
+    if (adminRoute === '/admin' || masterRoute === '/master-admin') {
+      console.warn('Admin routes are using default public paths. Use private route slugs in production.');
+    }
+
+    if (!allowlist) {
+      console.warn('Admin feature enabled without VITE_ADMIN_ALLOWLIST. Restrict admin access before production release.');
     }
   }
   

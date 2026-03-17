@@ -5,13 +5,13 @@ import { useState, useEffect } from 'react';
  * Displays helpful warnings when environment variables are missing
  * Only shows in development mode
  */
-export default function ConfigValidator() {
-  const [issues, setIssues] = useState([]);
-  const [isVisible, setIsVisible] = useState(false);
+export default function ConfigValidator () {
+  const [ issues, setIssues ] = useState( [] );
+  const [ isVisible, setIsVisible ] = useState( false );
 
-  useEffect(() => {
+  useEffect( () => {
     // Only run in development
-    if (import.meta.env.MODE !== 'development') return;
+    if ( import.meta.env.MODE !== 'development' ) return;
 
     const configIssues = [];
 
@@ -26,72 +26,72 @@ export default function ConfigValidator() {
     ];
 
     const missingFirebase = firebaseVars.filter(
-      varName => !import.meta.env[varName]
+      varName => !import.meta.env[ varName ]
     );
 
-    if (missingFirebase.length > 0) {
-      configIssues.push({
+    if ( missingFirebase.length > 0 ) {
+      configIssues.push( {
         type: 'error',
         title: 'Firebase Configuration Missing',
-        message: `Missing: ${missingFirebase.join(', ')}`,
+        message: `Missing: ${missingFirebase.join( ', ' )}`,
         solution: 'Add Firebase credentials to Onchainweb/.env file. See .env.example for instructions.',
         docs: 'https://console.firebase.google.com'
-      });
+      } );
     }
 
     // Check WalletConnect configuration
-    if (!import.meta.env.VITE_WALLETCONNECT_PROJECT_ID) {
-      configIssues.push({
+    if ( !import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ) {
+      configIssues.push( {
         type: 'warning',
         title: 'WalletConnect Not Configured',
         message: 'VITE_WALLETCONNECT_PROJECT_ID is missing',
         solution: 'WalletConnect QR code feature will not work. Get a free Project ID from WalletConnect Cloud.',
         docs: 'https://cloud.walletconnect.com'
-      });
+      } );
     }
 
     // Check Admin configuration
     const adminEnabled = import.meta.env.VITE_ENABLE_ADMIN === 'true';
-    if (!adminEnabled) {
-      configIssues.push({
+    if ( !adminEnabled ) {
+      configIssues.push( {
         type: 'info',
         title: 'Admin Features Disabled',
         message: 'VITE_ENABLE_ADMIN is not set to "true"',
         solution: 'To enable master account login, set VITE_ENABLE_ADMIN=true in .env file and restart dev server.',
         docs: null
-      });
+      } );
     } else {
       // Admin is enabled, check allowlist
       const allowlist = import.meta.env.VITE_ADMIN_ALLOWLIST;
-      if (!allowlist) {
-        configIssues.push({
+      if ( !allowlist ) {
+        configIssues.push( {
           type: 'warning',
           title: 'Admin Allowlist Empty',
           message: 'VITE_ADMIN_ALLOWLIST is not configured',
-          solution: 'Add admin emails to VITE_ADMIN_ALLOWLIST in .env file (e.g., master@onchainweb.site). Master accounts MUST start with "master@".',
+          solution: 'Add admin emails to VITE_ADMIN_ALLOWLIST in .env file (e.g., phtkhamporntip@gmail.com).',
           docs: null
-        });
+        } );
       } else {
-        // Check if allowlist has a master account
-        const emails = allowlist.split(',').map(e => e.trim().toLowerCase());
-        const hasMaster = emails.some(email => email.startsWith('master@'));
-        if (!hasMaster) {
-          configIssues.push({
+        // Check if allowlist has at least one admin email.
+        const emails = allowlist.split( ',' ).map( e => e.trim().toLowerCase() );
+        const hasAnyAdminEmail = emails.some( email => email.includes( '@' ) );
+        if ( !hasAnyAdminEmail ) {
+          configIssues.push( {
             type: 'warning',
-            title: 'No Master Account in Allowlist',
-            message: 'No email starting with "master@" found in VITE_ADMIN_ALLOWLIST',
-            solution: 'Add a master account email starting with "master@" (e.g., master@onchainweb.site) to access the master admin dashboard.',
+            title: 'No Valid Admin Email in Allowlist',
+            message: 'VITE_ADMIN_ALLOWLIST does not contain a valid email',
+            solution: 'Add at least one valid admin email to VITE_ADMIN_ALLOWLIST to access admin dashboards.',
             docs: null
-          });
+          } );
         }
       }
     }
 
-    setIssues(configIssues);
-    setIsVisible(configIssues.length > 0);
-  }, []);
+    setIssues( configIssues );
+    setIsVisible( configIssues.length > 0 );
+  }, [] );
 
-  if (!isVisible || issues.length === 0) return null;
+  if ( !isVisible || issues.length === 0 ) return null;
 
   return (
     <div className="config-validator">
@@ -100,7 +100,7 @@ export default function ConfigValidator() {
         <h3>Configuration Issues Detected</h3>
         <button
           className="config-validator-close"
-          onClick={() => setIsVisible(false)}
+          onClick={() => setIsVisible( false )}
           title="Dismiss"
           aria-label="Close configuration validator"
         >
@@ -108,7 +108,7 @@ export default function ConfigValidator() {
         </button>
       </div>
       <div className="config-validator-issues">
-        {issues.map((issue, index) => (
+        {issues.map( ( issue, index ) => (
           <div key={index} className={`config-issue config-issue-${issue.type}`}>
             <div className="config-issue-header">
               <span className="config-issue-icon">
@@ -132,7 +132,7 @@ export default function ConfigValidator() {
               </a>
             )}
           </div>
-        ))}
+        ) )}
       </div>
       <div className="config-validator-footer">
         <p>💡 These warnings only appear in development mode</p>

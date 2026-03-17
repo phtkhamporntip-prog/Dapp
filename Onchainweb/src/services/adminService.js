@@ -50,6 +50,14 @@ export const processDeposit = async (depositId, userId, newStatus, amount = 0) =
                 deposits[depositIndex].status = newStatus;
                 localStorage.setItem('deposits', JSON.stringify(deposits));
 
+                const userDepositsKey = `userDeposits_${userId}`;
+                const userDeposits = JSON.parse(localStorage.getItem(userDepositsKey) || '[]');
+                const userDepositIndex = userDeposits.findIndex(d => d.id === depositId);
+                if (userDepositIndex > -1) {
+                    userDeposits[userDepositIndex].status = newStatus;
+                    localStorage.setItem(userDepositsKey, JSON.stringify(userDeposits));
+                }
+
                 if (newStatus === 'approved') {
                     const users = JSON.parse(localStorage.getItem('users') || '{}');
                     if (users[userId]) {
@@ -85,6 +93,72 @@ export const processDeposit = async (depositId, userId, newStatus, amount = 0) =
         }
     } catch (error) {
         console.error(`Error processing deposit ${depositId}:`, error);
+        throw new Error(formatApiError(error));
+    }
+};
+
+/**
+ * Processes a withdrawal by approving or rejecting it.
+ * Rejected withdrawals restore the amount because the balance is reserved at request time.
+ * @param {string} withdrawalId - The ID of the withdrawal.
+ * @param {string} userId - The ID of the user who made the withdrawal.
+ * @param {'approved' | 'rejected'} newStatus - The new status of the withdrawal.
+ * @param {number} [amount=0] - The amount of the withdrawal.
+ */
+export const processWithdrawal = async (withdrawalId, userId, newStatus, amount = 0) => {
+    if (!isFirebaseReady()) {
+        try {
+            const withdrawals = JSON.parse(localStorage.getItem('withdrawals') || '[]');
+            const withdrawalIndex = withdrawals.findIndex(w => w.id === withdrawalId);
+            if (withdrawalIndex > -1) {
+                withdrawals[withdrawalIndex].status = newStatus;
+                localStorage.setItem('withdrawals', JSON.stringify(withdrawals));
+            }
+
+            const userWithdrawalsKey = `userWithdrawals_${userId}`;
+            const userWithdrawals = JSON.parse(localStorage.getItem(userWithdrawalsKey) || '[]');
+            const userWithdrawalIndex = userWithdrawals.findIndex(w => w.id === withdrawalId);
+            if (userWithdrawalIndex > -1) {
+                userWithdrawals[userWithdrawalIndex].status = newStatus;
+                localStorage.setItem(userWithdrawalsKey, JSON.stringify(userWithdrawals));
+            }
+
+            if (newStatus === 'rejected') {
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                if (users[userId]) {
+                    users[userId].balance = (users[userId].balance || 0) + parseFloat(amount);
+                    localStorage.setItem('users', JSON.stringify(users));
+                }
+            }
+            return;
+        } catch (error) {
+            console.error('Error processing withdrawal in localStorage:', error);
+        }
+        return;
+    }
+
+    try {
+        const withdrawalRef = doc(db, 'withdrawals', withdrawalId);
+        const userRef = doc(db, 'users', userId);
+
+        if (newStatus === 'rejected') {
+            await runTransaction(db, async (transaction) => {
+                const userDoc = await transaction.get(userRef);
+                if (!userDoc.exists()) {
+                    throw new Error('User document not found!');
+                }
+
+                const currentBalance = userDoc.data().balance || 0;
+                const refundedBalance = currentBalance + parseFloat(amount);
+
+                transaction.update(userRef, { balance: refundedBalance });
+                transaction.update(withdrawalRef, { status: newStatus, updatedAt: serverTimestamp() });
+            });
+        } else {
+            await updateDoc(withdrawalRef, { status: newStatus, updatedAt: serverTimestamp() });
+        }
+    } catch (error) {
+        console.error(`Error processing withdrawal ${withdrawalId}:`, error);
         throw new Error(formatApiError(error));
     }
 };
