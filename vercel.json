@@ -3,7 +3,7 @@
   "framework": null,
   "buildCommand": "cd Onchainweb && npm run build",
   "outputDirectory": "Onchainweb/dist",
-  "installCommand": "cd Onchainweb && npm install",
+  "installCommand": "cd Onchainweb && npm install --include=dev",
   "env": {
     "NODE_VERSION": "20"
   },
