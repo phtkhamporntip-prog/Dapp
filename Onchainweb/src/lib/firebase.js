@@ -201,7 +201,7 @@ export const subscribeToTradingAdminSettings = ( callback ) => {
 
 export const subscribeToAiArbitrageInvestments = ( callback ) => {
   const investmentsKey = 'aiArbitrageInvestments';
-  const userId = localStorage.getItem( 'wallet_address' );
+  const userId = localStorage.getItem( 'walletAddress' ) || localStorage.getItem( 'wallet_address' );
   const fallback = () => {
     const investments = getLocalStorageFallback( investmentsKey, [] );
     const userInvestments = investments.filter( inv => inv.userId === userId && !inv.completed );

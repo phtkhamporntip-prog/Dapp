@@ -29,7 +29,7 @@ export default function BinaryOptions ( { isOpen = true, onClose } ) {
 
     const [ toast, setToast ] = useState( { message: '', type: '' } );
     const [ settings, setSettings ] = useState( null );
-    const [ userId ] = useState( () => localStorage.getItem( 'wallet_address' ) || 'guest' );
+    const [ userId ] = useState( () => localStorage.getItem( 'walletAddress' ) || localStorage.getItem( 'wallet_address' ) || 'guest' );
     const [ balance, setBalance ] = useState( () => parseFloat( localStorage.getItem( 'userBalance' ) || '0' ) );
     const [ pair, setPair ] = useState( 'BTC/USDT' );
     const [ selectedLevelId, setSelectedLevelId ] = useState( '' );

@@ -31,7 +31,7 @@ export default function AIArbitrage ( { isOpen = true, onClose } ) {
 
     const [ toast, setToast ] = useState( { message: '', type: '' } );
     const [ settings, setSettings ] = useState( null );
-    const [ userId ] = useState( () => localStorage.getItem( 'wallet_address' ) || 'guest' );
+    const [ userId ] = useState( () => localStorage.getItem( 'walletAddress' ) || localStorage.getItem( 'wallet_address' ) || 'guest' );
     const [ balance, setBalance ] = useState( () => parseFloat( localStorage.getItem( 'userBalance' ) || '0' ) );
     const [ selectedLevelId, setSelectedLevelId ] = useState( '' );
     const [ amount, setAmount ] = useState( '' );

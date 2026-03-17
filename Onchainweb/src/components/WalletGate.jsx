@@ -3,44 +3,44 @@ import { createUser, getUserById } from '../services/database.service'
 import { logger } from '../utils/logger'
 
 // Web3 Wallet Gate - User MUST connect wallet to see any content
-export default function WalletGate({ onConnect, children }) {
-  const [isConnecting, setIsConnecting] = useState(false)
-  const [error, setError] = useState('')
-  const [selectedWallet, setSelectedWallet] = useState(null)
+export default function WalletGate ( { onConnect, children } ) {
+  const [ isConnecting, setIsConnecting ] = useState( false )
+  const [ error, setError ] = useState( '' )
+  const [ selectedWallet, setSelectedWallet ] = useState( null )
 
   // Check if already connected
-  const isConnected = localStorage.getItem('walletConnected') === 'true'
-  const connectedAddress = localStorage.getItem('walletAddress') || ''
+  const isConnected = localStorage.getItem( 'walletConnected' ) === 'true'
+  const connectedAddress = localStorage.getItem( 'walletAddress' ) || localStorage.getItem( 'wallet_address' ) || ''
 
   // Register user in Firebase when wallet connects
-  const registerUserInFirebase = async (address, walletType) => {
+  const registerUserInFirebase = async ( address, walletType ) => {
     try {
-      logger.log('[Firebase] Starting user registration:', address, walletType)
+      logger.log( '[Firebase] Starting user registration:', address, walletType )
 
       // Check if user already exists
       try {
-        const existingUser = await getUserById(address)
-        if (existingUser) {
-          logger.log('[Firebase] User already exists, updating login time')
+        const existingUser = await getUserById( address )
+        if ( existingUser ) {
+          logger.log( '[Firebase] User already exists, updating login time' )
           // Update last login
-          await createUser({
+          await createUser( {
             ...existingUser,
             lastLogin: new Date(),
             walletType: walletType
-          })
+          } )
           return existingUser
         }
-      } catch (checkError) {
-        logger.log('[Firebase] User does not exist, creating new user')
+      } catch ( checkError ) {
+        logger.log( '[Firebase] User does not exist, creating new user' )
       }
 
       // Get existing profile data if any
-      const existingProfile = localStorage.getItem('userProfile')
-      const profileData = existingProfile ? JSON.parse(existingProfile) : {}
+      const existingProfile = localStorage.getItem( 'userProfile' )
+      const profileData = existingProfile ? JSON.parse( existingProfile ) : {}
 
       // Generate unique user ID
       const userId = profileData.userId || `USR${Date.now()}`
-      const username = profileData.username || `User_${address.substring(2, 8)}`
+      const username = profileData.username || `User_${address.substring( 2, 8 )}`
 
       // Create user data for Firebase
       const userData = {
@@ -60,39 +60,39 @@ export default function WalletGate({ onConnect, children }) {
       }
 
       // Save to Firebase Firestore
-      logger.log('[Firebase] Saving user data to Firestore...')
-      await createUser(userData)
-      logger.log('[Firebase] ✅ User saved successfully to Firestore!')
+      logger.log( '[Firebase] Saving user data to Firestore...' )
+      await createUser( userData )
+      logger.log( '[Firebase] ✅ User saved successfully to Firestore!' )
 
       // Store user data locally
-      localStorage.setItem('backendUserId', address)
-      localStorage.setItem('backendUser', JSON.stringify(userData))
-      localStorage.setItem('realAccountId', userId)
-      localStorage.setItem('userProfile', JSON.stringify(userData))
+      localStorage.setItem( 'backendUserId', address )
+      localStorage.setItem( 'backendUser', JSON.stringify( userData ) )
+      localStorage.setItem( 'realAccountId', userId )
+      localStorage.setItem( 'userProfile', JSON.stringify( userData ) )
 
-      logger.log('[Firebase] ✅ User registered and saved:', {
+      logger.log( '[Firebase] ✅ User registered and saved:', {
         wallet: address,
         userId: userId,
         username: username
-      })
+      } )
 
       return userData
-    } catch (error) {
-      logger.error('[Firebase] ❌ Failed to register user:', error)
-      logger.error('[Firebase] Error details:', error.message)
+    } catch ( error ) {
+      logger.error( '[Firebase] ❌ Failed to register user:', error )
+      logger.error( '[Firebase] Error details:', error.message )
       // Still allow local usage
       return null
     }
   }
 
   // On app load, ensure connected wallet is registered in Firebase
-  useEffect(() => {
-    if (isConnected && connectedAddress) {
+  useEffect( () => {
+    if ( isConnected && connectedAddress ) {
       // Re-register to ensure Firebase has latest data
-      const walletType = localStorage.getItem('walletType') || 'unknown'
-      registerUserInFirebase(connectedAddress, walletType)
+      const walletType = localStorage.getItem( 'walletType' ) || 'unknown'
+      registerUserInFirebase( connectedAddress, walletType )
     }
-  }, [isConnected, connectedAddress])
+  }, [ isConnected, connectedAddress ] )
 
   // Supported wallets
   const wallets = [
@@ -109,60 +109,61 @@ export default function WalletGate({ onConnect, children }) {
   ]
 
   // Simulate wallet connection
-  const connectWallet = async (walletId) => {
-    setIsConnecting(true)
-    setError('')
-    setSelectedWallet(walletId)
+  const connectWallet = async ( walletId ) => {
+    setIsConnecting( true )
+    setError( '' )
+    setSelectedWallet( walletId )
 
     try {
       let address = ''
 
       // Check if MetaMask or other Web3 provider exists
-      if (walletId === 'metamask' && typeof window.ethereum !== 'undefined') {
+      if ( walletId === 'metamask' && typeof window.ethereum !== 'undefined' ) {
         // Real MetaMask connection
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-        if (accounts.length > 0) {
-          address = accounts[0]
+        const accounts = await window.ethereum.request( { method: 'eth_requestAccounts' } )
+        if ( accounts.length > 0 ) {
+          address = accounts[ 0 ]
         }
       } else {
         // For other wallets or if no Web3 provider, simulate connection
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        await new Promise( resolve => setTimeout( resolve, 2000 ) )
 
         // Generate a simulated address using cryptographically secure randomness
-        const cryptoObj = (typeof window !== 'undefined' && window.crypto) ? window.crypto : crypto
-        const randomBytes = new Uint8Array(20) // 20 bytes = 40 hex characters
-        cryptoObj.getRandomValues(randomBytes)
-        const hex = Array.from(randomBytes, b => b.toString(16).padStart(2, '0')).join('')
+        const cryptoObj = ( typeof window !== 'undefined' && window.crypto ) ? window.crypto : crypto
+        const randomBytes = new Uint8Array( 20 ) // 20 bytes = 40 hex characters
+        cryptoObj.getRandomValues( randomBytes )
+        const hex = Array.from( randomBytes, b => b.toString( 16 ).padStart( 2, '0' ) ).join( '' )
         address = '0x' + hex
       }
 
-      if (address) {
-        localStorage.setItem('walletConnected', 'true')
-        localStorage.setItem('walletAddress', address)
-        localStorage.setItem('walletType', walletId)
+      if ( address ) {
+        localStorage.setItem( 'walletConnected', 'true' )
+        localStorage.setItem( 'walletAddress', address )
+        localStorage.setItem( 'wallet_address', address )
+        localStorage.setItem( 'walletType', walletId )
 
         // Register user in Firebase immediately
-        const user = await registerUserInFirebase(address, walletId)
-        logger.log('[Firebase] Wallet connected and user registered:', user ? user.userId : 'failed')
+        const user = await registerUserInFirebase( address, walletId )
+        logger.log( '[Firebase] Wallet connected and user registered:', user ? user.userId : 'failed' )
 
         // Notify parent component
-        if (onConnect) {
-          onConnect(address)
+        if ( onConnect ) {
+          onConnect( address )
         }
 
         // Success - component will re-render and show children
-        setIsConnecting(false)
+        setIsConnecting( false )
       }
-    } catch (err) {
-      logger.error('[Wallet] Connection error:', err)
-      setError('Connection failed. Please try again or use a different wallet.')
-      setIsConnecting(false)
-      setSelectedWallet(null)
+    } catch ( err ) {
+      logger.error( '[Wallet] Connection error:', err )
+      setError( 'Connection failed. Please try again or use a different wallet.' )
+      setIsConnecting( false )
+      setSelectedWallet( null )
     }
   }
 
   // If already connected, show the app
-  if (isConnected && connectedAddress) {
+  if ( isConnected && connectedAddress ) {
     return children
   }
 
@@ -195,11 +196,11 @@ export default function WalletGate({ onConnect, children }) {
             <div className="wallet-section">
               <h3>Popular</h3>
               <div className="wallet-grid">
-                {wallets.filter(w => w.popular).map(wallet => (
+                {wallets.filter( w => w.popular ).map( wallet => (
                   <button
                     key={wallet.id}
                     className={`wallet-btn ${selectedWallet === wallet.id ? 'connecting' : ''}`}
-                    onClick={() => connectWallet(wallet.id)}
+                    onClick={() => connectWallet( wallet.id )}
                     disabled={isConnecting}
                     style={{ '--wallet-color': wallet.color }}
                   >
@@ -209,18 +210,18 @@ export default function WalletGate({ onConnect, children }) {
                       <span className="connecting-spinner">⟳</span>
                     )}
                   </button>
-                ))}
+                ) )}
               </div>
             </div>
 
             <div className="wallet-section">
               <h3>More Wallets</h3>
               <div className="wallet-grid small">
-                {wallets.filter(w => !w.popular).map(wallet => (
+                {wallets.filter( w => !w.popular ).map( wallet => (
                   <button
                     key={wallet.id}
                     className={`wallet-btn small ${selectedWallet === wallet.id ? 'connecting' : ''}`}
-                    onClick={() => connectWallet(wallet.id)}
+                    onClick={() => connectWallet( wallet.id )}
                     disabled={isConnecting}
                     style={{ '--wallet-color': wallet.color }}
                   >
@@ -230,7 +231,7 @@ export default function WalletGate({ onConnect, children }) {
                       <span className="connecting-spinner">⟳</span>
                     )}
                   </button>
-                ))}
+                ) )}
               </div>
             </div>
           </div>
