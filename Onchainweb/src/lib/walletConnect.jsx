@@ -3,7 +3,7 @@ import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
 import { WagmiProvider, useAccount, useConnect, useDisconnect } from 'wagmi';
 import { mainnet, bsc, polygon, arbitrum, optimism, avalanche, fantom } from 'wagmi/chains';
-import { WALLET_CONNECTORS, SUPPORTED_CHAINS } from '../config/constants';
+import { APP_CONFIG, WALLET_CONNECTORS, SUPPORTED_CHAINS } from '../config/constants';
 import { formatApiError } from './errorHandling';
 import { saveWalletState, loadWalletState, clearWalletState } from '../services/walletStateService';
 import Toast from '../components/Toast';
@@ -12,12 +12,13 @@ import Toast from '../components/Toast';
 const isBrowser = typeof window !== 'undefined';
 
 const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+const metadataBaseUrl = ( APP_CONFIG.URL || ( isBrowser ? window.location.origin : 'https://onchainweb.site' ) ).replace( /\/$/, '' );
 
 const metadata = {
-    name: 'OnchainWeb',
+    name: APP_CONFIG.NAME,
     description: 'Web3 Trading Platform',
-    url: 'https://onchainweb.app',
-    icons: [ 'https://onchainweb.app/logo.png' ]
+    url: metadataBaseUrl,
+    icons: [ `${metadataBaseUrl}/logo.svg` ]
 };
 
 const chains = [ mainnet, bsc, polygon, arbitrum, optimism, avalanche, fantom ];

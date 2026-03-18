@@ -21,6 +21,7 @@ import { handleAdminLogin, formatFirebaseAuthError } from '../lib/adminAuth.js';
 import { createAdminAccount, subscribeToAdmins, updateAdminAccount, deleteAdminAccount, processDeposit, processWithdrawal } from '../services/adminService.js';
 import Toast from './Toast.jsx';
 import TradingControlPanel from './TradingControlPanel.jsx';
+import BrandLogo from './BrandLogo.jsx';
 
 export default function MasterAdminDashboard () {
     const [ isAuthenticated, setIsAuthenticated ] = useState( false );
@@ -252,7 +253,7 @@ export default function MasterAdminDashboard () {
                 <Toast message={toast.message} type={toast.type} onClose={() => setToast( { message: '', type: '' } )} />
                 <div className="login-container">
                     <div className="login-logo">
-                        <img src="/logo.svg" alt="OnchainWeb" className="admin-logo-lg" />
+                        <BrandLogo className="admin-logo-lg" alt="OnchainWeb" />
                     </div>
                     <h1>Master Admin</h1>
                     <p>Secure administrative access</p>
@@ -293,7 +294,7 @@ export default function MasterAdminDashboard () {
             <Toast message={toast.message} type={toast.type} onClose={() => setToast( { message: '', type: '' } )} />
             <nav className="admin-top-nav">
                 <div className="nav-logo">
-                    <img src="/logo.svg" alt="OnchainWeb" className="admin-logo-sm" />
+                    <BrandLogo className="admin-logo-sm" alt="OnchainWeb" />
                     <span className="nav-logo-brand">Master Admin</span>
                 </div>
                 <div className="nav-menu">

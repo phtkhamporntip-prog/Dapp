@@ -6,6 +6,7 @@ import { getAdminByEmail, hasMasterAccount } from '../services/adminService.js';
 import { onAuthStateChanged, auth } from '../lib/firebase.js';
 import { getAllowedAdminEmails } from '../lib/adminAuth.js';
 import { logger } from '../utils/logger.js';
+import { ROUTES } from '../config/constants.js';
 
 /**
  * Admin Route Guard
@@ -15,87 +16,87 @@ import { logger } from '../utils/logger.js';
  * 3. If exists, show login
  * 4. After login, show the admin dashboard
  */
-export default function AdminRouteGuard({
+export default function AdminRouteGuard ( {
   children,
   requireMaster = false,
   redirectOnSuccess = null
-}) {
-  const [authState, setAuthState] = useState('checking'); // checking, need_master, need_login, authenticated
-  const [currentUser, setCurrentUser] = useState(null);
-  const [adminData, setAdminData] = useState(null);
+} ) {
+  const [ authState, setAuthState ] = useState( 'checking' ); // checking, need_master, need_login, authenticated
+  const [ currentUser, setCurrentUser ] = useState( null );
+  const [ adminData, setAdminData ] = useState( null );
   const navigate = useNavigate();
 
   // Check authentication state - only run once on mount
-  useEffect(() => {
+  useEffect( () => {
     let unsubscribe;
 
     // Async function to check master account existence and set up auth listener
     const checkAuth = async () => {
       // For master routes, first check if a master account exists in the database
-      if (requireMaster) {
+      if ( requireMaster ) {
         try {
           const masterExists = await hasMasterAccount();
-          if (!masterExists) {
-            logger.log('[AdminRouteGuard] No master account found, showing setup');
-            setAuthState('need_master');
+          if ( !masterExists ) {
+            logger.log( '[AdminRouteGuard] No master account found, showing setup' );
+            setAuthState( 'need_master' );
             return; // Don't set up auth listener if no master exists
           }
-        } catch (error) {
-          logger.error('[AdminRouteGuard] Error checking master account:', error);
-          setAuthState('need_login');
+        } catch ( error ) {
+          logger.error( '[AdminRouteGuard] Error checking master account:', error );
+          setAuthState( 'need_login' );
           return;
         }
       }
 
       // Set up auth state listener (synchronous, returns unsubscribe immediately)
-      unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user) {
+      unsubscribe = onAuthStateChanged( auth, async ( user ) => {
+        if ( user ) {
           // User is signed in, verify they're an admin
           try {
             // Check if email is in the allowlist (security layer)
             // Note: getAllowedAdminEmails() already returns lowercase emails
             const allowedEmails = getAllowedAdminEmails();
-            const userEmail = (user.email || '').toLowerCase();
-            
-            if (allowedEmails.length > 0 && !allowedEmails.includes(userEmail)) {
-              logger.warn('[AdminRouteGuard] User email not in allowlist:', userEmail);
-              setAuthState('need_login');
-              setCurrentUser(null);
-              setAdminData(null);
+            const userEmail = ( user.email || '' ).toLowerCase();
+
+            if ( allowedEmails.length > 0 && !allowedEmails.includes( userEmail ) ) {
+              logger.warn( '[AdminRouteGuard] User email not in allowlist:', userEmail );
+              setAuthState( 'need_login' );
+              setCurrentUser( null );
+              setAdminData( null );
               return;
             }
 
-            const admin = await getAdminByEmail(user.email);
+            const admin = await getAdminByEmail( user.email );
 
-            if (admin) {
+            if ( admin ) {
               // Check if route requires master role
-              if (requireMaster && admin.role !== 'master') {
-                logger.warn('[AdminRouteGuard] User is not a master admin');
-                setAuthState('need_login');
-                setCurrentUser(null);
-                setAdminData(null);
+              if ( requireMaster && admin.role !== 'master' ) {
+                logger.warn( '[AdminRouteGuard] User is not a master admin' );
+                setAuthState( 'need_login' );
+                setCurrentUser( null );
+                setAdminData( null );
                 return;
               }
 
-              logger.log('[AdminRouteGuard] User authenticated:', user.email);
-              setCurrentUser(user);
-              setAdminData(admin);
-              setAuthState('authenticated');
+              logger.log( '[AdminRouteGuard] User authenticated:', user.email );
+              setCurrentUser( user );
+              setAdminData( admin );
+              setAuthState( 'authenticated' );
               return;
             } else {
-              logger.warn('[AdminRouteGuard] User not found in admin collection');
-              setAuthState('need_login');
+              logger.warn( '[AdminRouteGuard] User not found in admin collection' );
+              setAuthState( 'need_login' );
             }
-          } catch (err) {
-            logger.error('[AdminRouteGuard] Error checking admin status:', err);
-            setAuthState('need_login');
+          } catch ( err ) {
+            logger.error( '[AdminRouteGuard] Error checking admin status:', err );
+            setAuthState( 'need_login' );
           }
         } else {
           // Not signed in
-          logger.log('[AdminRouteGuard] No user signed in');
-          setAuthState('need_login');
+          logger.log( '[AdminRouteGuard] No user signed in' );
+          setAuthState( 'need_login' );
         }
-      });
+      } );
     };
 
     // Execute the async check
@@ -103,31 +104,31 @@ export default function AdminRouteGuard({
 
     // Cleanup listener on unmount
     return () => {
-      if (unsubscribe) {
+      if ( unsubscribe ) {
         unsubscribe();
       }
     };
-  }, [requireMaster]); // Only depend on requireMaster which is stable
+  }, [ requireMaster ] ); // Only depend on requireMaster which is stable
 
-  const handleMasterSetupComplete = (masterInfo) => {
-    logger.log('[AdminRouteGuard] Master setup complete:', masterInfo);
+  const handleMasterSetupComplete = ( masterInfo ) => {
+    logger.log( '[AdminRouteGuard] Master setup complete:', masterInfo );
     // After master setup, show login
-    setAuthState('need_login');
+    setAuthState( 'need_login' );
   };
 
-  const handleLoginSuccess = (loginData) => {
-    logger.log('[AdminRouteGuard] Login successful:', loginData.user.email);
-    setCurrentUser(loginData.user);
-    setAdminData(loginData.admin);
-    setAuthState('authenticated');
+  const handleLoginSuccess = ( loginData ) => {
+    logger.log( '[AdminRouteGuard] Login successful:', loginData.user.email );
+    setCurrentUser( loginData.user );
+    setAdminData( loginData.admin );
+    setAuthState( 'authenticated' );
 
-    if (redirectOnSuccess) {
-      navigate(redirectOnSuccess);
+    if ( redirectOnSuccess ) {
+      navigate( redirectOnSuccess );
     }
   };
 
   // Show loading while checking
-  if (authState === 'checking') {
+  if ( authState === 'checking' ) {
     return (
       <div className="admin-guard-loading">
         <div className="spinner"></div>
@@ -161,28 +162,28 @@ export default function AdminRouteGuard({
   }
 
   // Show master setup if needed
-  if (authState === 'need_master') {
+  if ( authState === 'need_master' ) {
     return <MasterAccountSetup onComplete={handleMasterSetupComplete} />;
   }
 
   // Show login if not authenticated
-  if (authState === 'need_login') {
+  if ( authState === 'need_login' ) {
     return (
       <AdminLogin
         onLoginSuccess={handleLoginSuccess}
-        allowedRoute={requireMaster ? '/master-admin' : '/admin'}
+        allowedRoute={requireMaster ? ROUTES.MASTER_ADMIN : ROUTES.ADMIN}
       />
     );
   }
 
   // Show the protected content if authenticated
-  if (authState === 'authenticated') {
+  if ( authState === 'authenticated' ) {
     // Clone children and pass admin data as props
-    return cloneElement(children, {
+    return cloneElement( children, {
       currentUser,
       adminData,
       isMaster: adminData?.role === 'master'
-    });
+    } );
   }
 
   return null;

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUniversalWallet } from '../lib/walletConnect';
 import UniversalWalletModal from './UniversalWalletModal';
+import BrandLogo from './BrandLogo.jsx';
 
 const _debugUnused_Header = ( ctx ) => { if ( typeof console !== 'undefined' ) console.debug( 'header-unused', ctx ); };
 _debugUnused_Header( { Link, UniversalWalletModal } );
@@ -19,7 +20,7 @@ export default function Header () {
         <header className="header">
             <div className="logo">
                 <Link to="/" className="logo-link">
-                    <img src="/logo.svg" alt="Snipe" className="app-logo-img" />
+                    <BrandLogo className="app-logo-img" alt="Snipe" />
                     <span className="logo-wordmark">Snipe</span>
                 </Link>
             </div>
