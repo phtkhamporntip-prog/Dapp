@@ -8,10 +8,16 @@
 !Onchainweb
 !Onchainweb/**
 
-# Exclude build outputs and dependencies from anywhere
-**/node_modules
-**/dist
-**/.vercel
-**/.cache
-**/.turbo
-**/.next
+# Exclude build outputs and dependencies (use explicit paths for compatibility)
+node_modules
+Onchainweb/node_modules
+Onchainweb/dist
+Onchainweb/.vercel
+Onchainweb/.cache
+Onchainweb/.turbo
+Onchainweb/.next
+Onchainweb/.git
+
+# Documentation files
+!README.md
+!LICENSE
