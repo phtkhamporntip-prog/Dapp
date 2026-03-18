@@ -129,13 +129,15 @@
 | [verify-public-release.sh](verify-public-release.sh) | Verify release readiness |
 | [test-deployment.sh](test-deployment.sh) | Test deployment |
 | [test-production-readiness.sh](test-production-readiness.sh) | Test production readiness |
-| [run-all-tests.sh](run-all-tests.sh) | Run all tests
-cd backend && npm run dev
+| [run-all-tests.sh](run-all-tests.sh) | Run all tests |
 
-# Terminal 2: Frontend
+### Local development (frontend)
+
+```bash
+# Terminal: Frontend (Firebase-first)
 cd Onchainweb && npm run dev
 
-# Terminal 3: Open browser
+# Open browser
 open http://localhost:5173
 ```
 
