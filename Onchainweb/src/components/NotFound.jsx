@@ -1,19 +1,18 @@
 // React automatic JSX runtime in use — default import not required
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ROUTES } from '../config/constants.js';
 
 /**
  * NotFound Component
  * Displays a clear 404 error message for undefined routes
  * Provides helpful information about admin routes when appropriate
  */
-export default function NotFound () {
+export default function NotFound() {
   const navigate = useNavigate();
   const location = useLocation();
 
   // Check if this is an admin route attempt
-  const isAdminRoute = location.pathname === ROUTES.ADMIN || location.pathname === ROUTES.MASTER_ADMIN;
-  const isMasterRoute = location.pathname === ROUTES.MASTER_ADMIN;
+  const isAdminRoute = location.pathname === '/admin' || location.pathname === '/master-admin';
+  const isMasterRoute = location.pathname === '/master-admin';
 
   return (
     <div style={{
@@ -80,7 +79,7 @@ export default function NotFound () {
           margin: '0 0 12px',
           color: '#f3f4f6'
         }}>
-          {isAdminRoute ? ( isMasterRoute ? 'Master Admin Route Not Available' : 'Admin Route Not Available' ) : 'Page Not Found'}
+          {isAdminRoute ? (isMasterRoute ? 'Master Admin Route Not Available' : 'Admin Route Not Available') : 'Page Not Found'}
         </h2>
 
         <p style={{
@@ -158,7 +157,7 @@ export default function NotFound () {
           flexWrap: 'wrap'
         }}>
           <button
-            onClick={() => navigate( '/' )}
+            onClick={() => navigate('/')}
             style={{
               padding: '12px 24px',
               background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
@@ -171,19 +170,19 @@ export default function NotFound () {
               transition: 'transform 0.2s, box-shadow 0.2s',
               boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)'
             }}
-            onMouseOver={( e ) => {
+            onMouseOver={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
               e.currentTarget.style.boxShadow = '0 6px 16px rgba(124, 58, 237, 0.4)';
             }}
-            onMouseOut={( e ) => {
+            onMouseOut={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
               e.currentTarget.style.boxShadow = '0 4px 12px rgba(124, 58, 237, 0.3)';
             }}
-            onFocus={( e ) => {
+            onFocus={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
               e.currentTarget.style.boxShadow = '0 6px 16px rgba(124, 58, 237, 0.4)';
             }}
-            onBlur={( e ) => {
+            onBlur={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
               e.currentTarget.style.boxShadow = '0 4px 12px rgba(124, 58, 237, 0.3)';
             }}
@@ -192,7 +191,7 @@ export default function NotFound () {
           </button>
 
           <button
-            onClick={() => navigate( -1 )}
+            onClick={() => navigate(-1)}
             style={{
               padding: '12px 24px',
               background: 'rgba(255, 255, 255, 0.1)',
@@ -204,19 +203,19 @@ export default function NotFound () {
               cursor: 'pointer',
               transition: 'background 0.2s, border-color 0.2s'
             }}
-            onMouseOver={( e ) => {
+            onMouseOver={(e) => {
               e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
               e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
             }}
-            onMouseOut={( e ) => {
+            onMouseOut={(e) => {
               e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
               e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
             }}
-            onFocus={( e ) => {
+            onFocus={(e) => {
               e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
               e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
             }}
-            onBlur={( e ) => {
+            onBlur={(e) => {
               e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
               e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
             }}

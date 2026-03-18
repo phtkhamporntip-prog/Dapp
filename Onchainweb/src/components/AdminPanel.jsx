@@ -4,72 +4,71 @@ import { firebaseSignIn, firebaseSignOut, subscribeToUsers, subscribeToDeposits,
 import { updateUserKYC, processDeposit } from '../services/adminService';
 import { handleAdminLogin } from '../lib/adminAuth.js';
 import Toast from './Toast.jsx';
-import BrandLogo from './BrandLogo.jsx';
 
-export default function AdminPanel ( { isOpen = true, onClose } ) {
-    const [ isAuthenticated, setIsAuthenticated ] = useState( false );
+export default function AdminPanel({ isOpen = true, onClose }) {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     // userPermissions was scaffolded but is unused; omit to reduce lint noise
-    const [ isLoggingIn, setIsLoggingIn ] = useState( false );
-    const [ isLoading, setIsLoading ] = useState( true );
-    const [ loginUsername, setLoginUsername ] = useState( '' );
-    const [ loginPassword, setLoginPassword ] = useState( '' );
-    const [ activeTab, setActiveTab ] = useState( 'users' );
-    const [ toast, setToast ] = useState( { message: '', type: '' } );
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loginUsername, setLoginUsername] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
+    const [activeTab, setActiveTab] = useState('users');
+    const [toast, setToast] = useState({ message: '', type: '' });
 
-    const [ allUsers, setAllUsers ] = useState( [] );
-    const [ allDeposits, setAllDeposits ] = useState( [] );
+    const [allUsers, setAllUsers] = useState([]);
+    const [allDeposits, setAllDeposits] = useState([]);
 
     // Memoize expensive filter operations to prevent recalculation on every render
-    const pendingKYC = useMemo( () => allUsers.filter( u => u.kycStatus === 'pending' ), [ allUsers ] );
-    const pendingDeposits = useMemo( () => allDeposits.filter( d => d.status === 'pending' ), [ allDeposits ] );
+    const pendingKYC = useMemo(() => allUsers.filter(u => u.kycStatus === 'pending'), [allUsers]);
+    const pendingDeposits = useMemo(() => allDeposits.filter(d => d.status === 'pending'), [allDeposits]);
 
-    const showToast = ( message, type = 'info' ) => {
-        setToast( { message, type } );
+    const showToast = (message, type = 'info') => {
+        setToast({ message, type });
     };
 
     // Ensure `Toast` and other scaffolded items are recognized as used by eslint
-    const _debugUnused_AdminPanel = ( ctx ) => { if ( typeof console !== 'undefined' ) console.debug( 'adminpanel-unused', ctx ); };
-    _debugUnused_AdminPanel( { Toast } );
+    const _debugUnused_AdminPanel = (ctx) => { if (typeof console !== 'undefined') console.debug('adminpanel-unused', ctx); };
+    _debugUnused_AdminPanel({ Toast });
 
-    useEffect( () => {
-        const unsubscribe = onAuthStateChanged( auth, async ( user ) => {
-            if ( user ) {
-                // Mark authenticated when Firebase reports user; admin details are fetched elsewhere when needed
-                setIsAuthenticated( true );
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                    // Mark authenticated when Firebase reports user; admin details are fetched elsewhere when needed
+                    setIsAuthenticated(true);
             } else {
-                setIsAuthenticated( false );
-            }
-            setIsLoading( false );
-        } );
+                    setIsAuthenticated(false);
+                }
+            setIsLoading(false);
+        });
         return () => unsubscribe();
-    }, [] );
+    }, []);
 
-    useEffect( () => {
-        if ( !isAuthenticated || !isFirebaseEnabled() ) {
-            setAllUsers( [] );
-            setAllDeposits( [] );
+    useEffect(() => {
+        if (!isAuthenticated || !isFirebaseEnabled()) {
+            setAllUsers([]);
+            setAllDeposits([]);
             return;
         }
 
-        const unsubscribeUsers = subscribeToUsers( setAllUsers );
-        const unsubscribeDeposits = subscribeToDeposits( setAllDeposits );
+        const unsubscribeUsers = subscribeToUsers(setAllUsers);
+        const unsubscribeDeposits = subscribeToDeposits(setAllDeposits);
 
         return () => {
             unsubscribeUsers();
             unsubscribeDeposits();
         };
-    }, [ isAuthenticated ] );
+    }, [isAuthenticated]);
 
-    const onLogin = async ( e ) => {
+    const onLogin = async (e) => {
         e.preventDefault();
-        setIsLoggingIn( true );
+        setIsLoggingIn(true);
         try {
             // handleAdminLogin will sign in and the onAuthStateChanged listener will handle the rest.
-            await handleAdminLogin( loginUsername, loginPassword, firebaseSignIn );
-        } catch ( error ) {
-            showToast( formatApiError( error ), 'error' );
+            await handleAdminLogin(loginUsername, loginPassword, firebaseSignIn);
+        } catch (error) {
+            showToast(formatApiError(error), 'error');
         } finally {
-            setIsLoggingIn( false );
+            setIsLoggingIn(false);
         }
     };
 
@@ -77,54 +76,54 @@ export default function AdminPanel ( { isOpen = true, onClose } ) {
         try {
             await firebaseSignOut();
             // onAuthStateChanged will handle setting isAuthenticated to false
-        } catch ( error ) {
-            showToast( formatApiError( error ), 'error' );
+        } catch (error) {
+            showToast(formatApiError(error), 'error');
         }
     };
 
-    const handleKycAction = async ( userId, status ) => {
+    const handleKycAction = async (userId, status) => {
         try {
-            await updateUserKYC( userId, status );
-            showToast( `User KYC has been ${status}.`, 'success' );
-        } catch ( error ) {
-            showToast( formatApiError( error ), 'error' );
+            await updateUserKYC(userId, status);
+            showToast(`User KYC has been ${status}.`, 'success');
+        } catch (error) {
+            showToast(formatApiError(error), 'error');
         }
     };
 
-    const handleDepositAction = async ( deposit, status ) => {
+    const handleDepositAction = async (deposit, status) => {
         try {
-            await processDeposit( deposit.id, deposit.userId, status, deposit.amount );
-            showToast( `Deposit has been ${status}.`, 'success' );
-        } catch ( error ) {
-            showToast( formatApiError( error ), 'error' );
+            await processDeposit(deposit.id, deposit.userId, status, deposit.amount);
+            showToast(`Deposit has been ${status}.`, 'success');
+        } catch (error) {
+            showToast(formatApiError(error), 'error');
         }
     };
 
-    if ( !isOpen ) return null;
-    if ( isLoading ) return <div>Loading Admin Panel...</div>
+    if (!isOpen) return null;
+    if (isLoading) return <div>Loading Admin Panel...</div>
 
     return (
         <div className="admin-modal-overlay" onClick={onClose}>
-            <div className="admin-modal" onClick={( e ) => e.stopPropagation()}>
+            <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
                 <button className="admin-close" onClick={onClose}>Close</button>
                 {toast.message && (
                     <Toast
                         message={toast.message}
                         type={toast.type}
-                        onClose={() => setToast( { message: '', type: '' } )}
+                        onClose={() => setToast({ message: '', type: '' })}
                     />
                 )}
                 {isAuthenticated ? (
                     <div className="admin-content">
-                        <div className="admin-panel-header">
-                            <BrandLogo className="admin-logo-sm" alt="OnchainWeb" />
+                    <div className="admin-panel-header">
+                            <img src="/logo.svg" alt="OnchainWeb" className="admin-logo-sm" />
                             <span>Admin Panel</span>
                         </div>
                         <div className="admin-tabs">
-                            <button onClick={() => setActiveTab( 'users' )} className={activeTab === 'users' ? 'active' : ''}>
+                            <button onClick={() => setActiveTab('users')} className={activeTab === 'users' ? 'active' : ''}>
                                 Users ({pendingKYC.length})
                             </button>
-                            <button onClick={() => setActiveTab( 'deposits' )} className={activeTab === 'deposits' ? 'active' : ''}>
+                            <button onClick={() => setActiveTab('deposits')} className={activeTab === 'deposits' ? 'active' : ''}>
                                 Deposits ({pendingDeposits.length})
                             </button>
                         </div>
@@ -132,26 +131,26 @@ export default function AdminPanel ( { isOpen = true, onClose } ) {
                         {activeTab === 'users' && (
                             <div className="admin-list">
                                 <h3>Pending KYC</h3>
-                                {pendingKYC.map( u => (
+                                {pendingKYC.map(u => (
                                     <div key={u.id} className="admin-row">
                                         <span>{u.email}</span>
-                                        <button onClick={() => handleKycAction( u.id, 'approved' )}>Approve</button>
-                                        <button onClick={() => handleKycAction( u.id, 'rejected' )}>Reject</button>
+                                        <button onClick={() => handleKycAction(u.id, 'approved')}>Approve</button>
+                                        <button onClick={() => handleKycAction(u.id, 'rejected')}>Reject</button>
                                     </div>
-                                ) )}
+                                ))}
                             </div>
                         )}
 
                         {activeTab === 'deposits' && (
                             <div className="admin-list">
                                 <h3>Pending Deposits</h3>
-                                {pendingDeposits.map( d => (
+                                {pendingDeposits.map(d => (
                                     <div key={d.id} className="admin-row">
                                         <span>{d.userId} - {d.amount}</span>
-                                        <button onClick={() => handleDepositAction( d, 'processed' )}>Process</button>
-                                        <button onClick={() => handleDepositAction( d, 'rejected' )}>Reject</button>
+                                        <button onClick={() => handleDepositAction(d, 'processed')}>Process</button>
+                                        <button onClick={() => handleDepositAction(d, 'rejected')}>Reject</button>
                                     </div>
-                                ) )}
+                                ))}
                             </div>
                         )}
 
@@ -162,11 +161,11 @@ export default function AdminPanel ( { isOpen = true, onClose } ) {
                 ) : (
                     <form className="admin-login" onSubmit={onLogin}>
                         <div className="admin-login-logo-wrap">
-                            <BrandLogo className="admin-logo-md" alt="OnchainWeb" />
+                            <img src="/logo.svg" alt="OnchainWeb" className="admin-logo-md" />
                             <p>Admin Login</p>
                         </div>
-                        <input value={loginUsername} onChange={( e ) => setLoginUsername( e.target.value )} placeholder="Username or Email" autoComplete="username" />
-                        <input type="password" value={loginPassword} onChange={( e ) => setLoginPassword( e.target.value )} placeholder="Password" autoComplete="current-password" />
+                        <input value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} placeholder="Username or Email" autoComplete="username" />
+                        <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="Password" autoComplete="current-password" />
                         <button type="submit" disabled={isLoggingIn}>
                             {isLoggingIn ? 'Signing in...' : 'Sign In'}
                         </button>

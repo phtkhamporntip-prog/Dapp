@@ -9,8 +9,8 @@ const normalizeRoute = (value, fallback) => {
 };
 
 const ADMIN_FEATURE_ENABLED = import.meta.env?.VITE_ENABLE_ADMIN === 'true';
-const ADMIN_ROUTE = normalizeRoute(import.meta.env?.VITE_ADMIN_ROUTE, '/internal-admin');
-const MASTER_ADMIN_ROUTE = normalizeRoute(import.meta.env?.VITE_MASTER_ADMIN_ROUTE, '/internal-master');
+const ADMIN_ROUTE = normalizeRoute(import.meta.env?.VITE_ADMIN_ROUTE, '/admin');
+const MASTER_ADMIN_ROUTE = normalizeRoute(import.meta.env?.VITE_MASTER_ADMIN_ROUTE, '/master-admin');
 const ADMIN_ALLOWLIST = (import.meta.env?.VITE_ADMIN_ALLOWLIST || '')
   .split(',')
   .map(entry => entry.trim().toLowerCase())
@@ -18,7 +18,7 @@ const ADMIN_ALLOWLIST = (import.meta.env?.VITE_ADMIN_ALLOWLIST || '')
 
 export const APP_CONFIG = {
   NAME: import.meta.env.VITE_APP_NAME || 'OnchainWeb',
-  URL: import.meta.env.VITE_APP_URL || 'https://onchainweb.site',
+  URL: import.meta.env.VITE_APP_URL || 'https://onchainweb.app',
   VERSION: '2.0.0', // Updated to 2.0 for Firebase migration
   DESCRIPTION: 'Real-Time Trading Platform with Firebase'
 };

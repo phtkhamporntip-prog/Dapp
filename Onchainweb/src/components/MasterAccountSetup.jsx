@@ -1,117 +1,116 @@
 import { useState, useEffect } from 'react';
 import { initializeMasterAccount, getAdminByEmail } from '../services/adminService.js';
 import { isFirebaseEnabled } from '../lib/firebase.js';
-import BrandLogo from './BrandLogo.jsx';
 
 /**
  * Master Account Setup Component
  * Automatically creates master account on first run
  * Shows setup status and instructions
  */
-export default function MasterAccountSetup ( { onComplete } ) {
-  const [ status, setStatus ] = useState( 'checking' ); // checking, needs_setup, setting_up, complete, error
-  const [ message, setMessage ] = useState( '' );
-  const [ masterEmail, setMasterEmail ] = useState( '' );
-  const [ masterPassword, setMasterPassword ] = useState( '' );
-  const [ confirmPassword, setConfirmPassword ] = useState( '' );
-  const [ error, setError ] = useState( '' );
-  const [ showManualSetup, setShowManualSetup ] = useState( false );
+export default function MasterAccountSetup({ onComplete }) {
+  const [status, setStatus] = useState('checking'); // checking, needs_setup, setting_up, complete, error
+  const [message, setMessage] = useState('');
+  const [masterEmail, setMasterEmail] = useState('');
+  const [masterPassword, setMasterPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [showManualSetup, setShowManualSetup] = useState(false);
 
-  useEffect( () => {
+  useEffect(() => {
     checkMasterAccount();
-  }, [] );
+  }, []);
 
   const checkMasterAccount = async () => {
-    if ( !isFirebaseEnabled() ) {
-      setStatus( 'error' );
-      setMessage( 'Firebase is not configured. Please set up Firebase credentials in .env file.' );
+    if (!isFirebaseEnabled()) {
+      setStatus('error');
+      setMessage('Firebase is not configured. Please set up Firebase credentials in .env file.');
       return;
     }
 
     try {
       // Check environment for default master email
       const allowlistEmails = import.meta.env.VITE_ADMIN_ALLOWLIST || '';
-      const emails = allowlistEmails.split( ',' ).map( e => e.trim().toLowerCase() ).filter( Boolean );
+      const emails = allowlistEmails.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 
-      if ( emails.length === 0 ) {
-        setStatus( 'error' );
-        setMessage( 'No admin emails configured in VITE_ADMIN_ALLOWLIST environment variable.' );
-        setShowManualSetup( true );
+      if (emails.length === 0) {
+        setStatus('error');
+        setMessage('No admin emails configured in VITE_ADMIN_ALLOWLIST environment variable.');
+        setShowManualSetup(true);
         return;
       }
 
       // Find master email (starts with 'master@' or first in list)
-      const defaultMasterEmail = emails.find( e => e.startsWith( 'master@' ) ) || emails[ 0 ];
-      setMasterEmail( defaultMasterEmail );
+      const defaultMasterEmail = emails.find(e => e.startsWith('master@')) || emails[0];
+      setMasterEmail(defaultMasterEmail);
 
       // Check if master already exists
-      const existingMaster = await getAdminByEmail( defaultMasterEmail );
+      const existingMaster = await getAdminByEmail(defaultMasterEmail);
 
-      if ( existingMaster ) {
-        setStatus( 'complete' );
-        setMessage( `Master account already exists: ${defaultMasterEmail}` );
-        setTimeout( () => {
-          if ( onComplete ) onComplete( existingMaster );
-        }, 1500 );
+      if (existingMaster) {
+        setStatus('complete');
+        setMessage(`Master account already exists: ${defaultMasterEmail}`);
+        setTimeout(() => {
+          if (onComplete) onComplete(existingMaster);
+        }, 1500);
       } else {
-        setStatus( 'needs_setup' );
-        setMessage( `Master account needs to be created for: ${defaultMasterEmail}` );
-        setShowManualSetup( true );
+        setStatus('needs_setup');
+        setMessage(`Master account needs to be created for: ${defaultMasterEmail}`);
+        setShowManualSetup(true);
       }
-    } catch ( err ) {
-      console.error( '[MasterSetup] Check error:', err );
-      setStatus( 'error' );
-      setMessage( `Error checking master account: ${err.message}` );
-      setShowManualSetup( true );
+    } catch (err) {
+      console.error('[MasterSetup] Check error:', err);
+      setStatus('error');
+      setMessage(`Error checking master account: ${err.message}`);
+      setShowManualSetup(true);
     }
   };
 
-  const handleSetup = async ( e ) => {
+  const handleSetup = async (e) => {
     e.preventDefault();
-    setError( '' );
+    setError('');
 
     // Validate passwords
-    if ( masterPassword.length < 8 ) {
-      setError( 'Password must be at least 8 characters long' );
+    if (masterPassword.length < 8) {
+      setError('Password must be at least 8 characters long');
       return;
     }
 
-    if ( masterPassword !== confirmPassword ) {
-      setError( 'Passwords do not match' );
+    if (masterPassword !== confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
 
-    setStatus( 'setting_up' );
-    setMessage( 'Creating master account...' );
+    setStatus('setting_up');
+    setMessage('Creating master account...');
 
     try {
-      const result = await initializeMasterAccount( masterEmail, masterPassword );
+      const result = await initializeMasterAccount(masterEmail, masterPassword);
 
-      if ( result.success ) {
-        setStatus( 'complete' );
-        setMessage( result.message );
+      if (result.success) {
+        setStatus('complete');
+        setMessage(result.message);
 
         // Save credentials hint to localStorage (NOT the actual password, just a reminder)
-        localStorage.setItem( 'masterAccountEmail', masterEmail );
+        localStorage.setItem('masterAccountEmail', masterEmail);
 
-        setTimeout( () => {
-          if ( onComplete ) onComplete( { email: masterEmail } );
-        }, 2000 );
+        setTimeout(() => {
+          if (onComplete) onComplete({ email: masterEmail });
+        }, 2000);
       } else {
-        setStatus( 'error' );
-        setMessage( result.message || 'Failed to create master account' );
-        setError( result.error || 'Unknown error' );
+        setStatus('error');
+        setMessage(result.message || 'Failed to create master account');
+        setError(result.error || 'Unknown error');
       }
-    } catch ( err ) {
-      console.error( '[MasterSetup] Setup error:', err );
-      setStatus( 'error' );
-      setMessage( 'Failed to create master account' );
-      setError( err.message );
+    } catch (err) {
+      console.error('[MasterSetup] Setup error:', err);
+      setStatus('error');
+      setMessage('Failed to create master account');
+      setError(err.message);
     }
   };
 
   const getStatusIcon = () => {
-    switch ( status ) {
+    switch (status) {
       case 'checking':
         return '🔍';
       case 'needs_setup':
@@ -128,7 +127,7 @@ export default function MasterAccountSetup ( { onComplete } ) {
   };
 
   const getStatusColor = () => {
-    switch ( status ) {
+    switch (status) {
       case 'checking':
       case 'setting_up':
         return '#667eea';
@@ -150,7 +149,7 @@ export default function MasterAccountSetup ( { onComplete } ) {
       <div className="master-setup-box">
         <div className="master-setup-header">
           <div className="master-setup-icon" style={{ color: getStatusColor() }}>
-            <BrandLogo className="admin-logo-lg" alt="OnchainWeb" />
+            <img src="/logo.svg" alt="OnchainWeb" className="admin-logo-lg" style={{ marginBottom: '8px' }} />
           </div>
           <h1>Master Account Setup</h1>
           <p className="master-setup-subtitle">Platform Administration</p>
@@ -175,7 +174,7 @@ export default function MasterAccountSetup ( { onComplete } ) {
                 id="email"
                 type="email"
                 value={masterEmail}
-                onChange={( e ) => setMasterEmail( e.target.value )}
+                onChange={(e) => setMasterEmail(e.target.value)}
                 placeholder="master@admin.yourdomain.com"
                 required
                 autoComplete="email"
@@ -191,7 +190,7 @@ export default function MasterAccountSetup ( { onComplete } ) {
                 id="password"
                 type="password"
                 value={masterPassword}
-                onChange={( e ) => setMasterPassword( e.target.value )}
+                onChange={(e) => setMasterPassword(e.target.value)}
                 placeholder="Enter a secure password (min 8 characters)"
                 required
                 minLength={8}
@@ -205,7 +204,7 @@ export default function MasterAccountSetup ( { onComplete } ) {
                 id="confirm"
                 type="password"
                 value={confirmPassword}
-                onChange={( e ) => setConfirmPassword( e.target.value )}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Re-enter password"
                 required
                 minLength={8}

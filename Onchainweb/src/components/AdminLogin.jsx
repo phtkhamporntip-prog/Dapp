@@ -2,98 +2,96 @@ import { useState, useEffect, useRef } from 'react';
 import { firebaseSignIn, onAuthStateChanged } from '../lib/firebase.js';
 import { handleAdminLogin, formatFirebaseAuthError } from '../lib/adminAuth.js';
 import { getAdminByEmail, updateAdminLastLogin } from '../services/adminService.js';
-import { ROUTES } from '../config/constants.js';
-import BrandLogo from './BrandLogo.jsx';
 
 /**
  * Admin Login Page
  * Allows admins and master to login with username/password
  * No wallet connection required
  */
-export default function AdminLogin ( { onLoginSuccess, allowedRoute = '/admin' } ) {
-  const [ username, setUsername ] = useState( '' );
-  const [ password, setPassword ] = useState( '' );
-  const [ isLoading, setIsLoading ] = useState( false );
-  const [ error, setError ] = useState( '' );
-  const [ isCheckingAuth, setIsCheckingAuth ] = useState( true );
+export default function AdminLogin({ onLoginSuccess, allowedRoute = '/admin' }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   // Use ref to store stable callback reference
-  const onLoginSuccessRef = useRef( onLoginSuccess );
+  const onLoginSuccessRef = useRef(onLoginSuccess);
 
   // Update ref when callback changes, but don't trigger re-render
-  useEffect( () => {
+  useEffect(() => {
     onLoginSuccessRef.current = onLoginSuccess;
-  }, [ onLoginSuccess ] );
+  }, [onLoginSuccess]);
 
   // Check if already authenticated
   // Note: Using ref pattern so callback stays updated without triggering re-renders
-  useEffect( () => {
-    const unsubscribe = onAuthStateChanged( async ( user ) => {
-      if ( user ) {
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(async (user) => {
+      if (user) {
         // User is signed in, check if they're an admin
         try {
-          const adminData = await getAdminByEmail( user.email );
-          if ( adminData ) {
-            console.log( '[AdminLogin] Already authenticated:', user.email );
-            await updateAdminLastLogin( adminData.uid );
-            if ( onLoginSuccessRef.current ) {
-              onLoginSuccessRef.current( {
+          const adminData = await getAdminByEmail(user.email);
+          if (adminData) {
+            console.log('[AdminLogin] Already authenticated:', user.email);
+            await updateAdminLastLogin(adminData.uid);
+            if (onLoginSuccessRef.current) {
+              onLoginSuccessRef.current({
                 user,
                 admin: adminData,
                 role: adminData.role,
                 permissions: adminData.permissions
-              } );
+              });
             }
           }
-        } catch ( err ) {
-          console.error( '[AdminLogin] Error checking admin status:', err );
+        } catch (err) {
+          console.error('[AdminLogin] Error checking admin status:', err);
         }
       }
-      setIsCheckingAuth( false );
-    } );
+      setIsCheckingAuth(false);
+    });
 
     return () => unsubscribe();
-  }, [] ); // Empty dependency array - only run once on mount
+  }, []); // Empty dependency array - only run once on mount
 
-  const handleSubmit = async ( e ) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading( true );
-    setError( '' );
+    setIsLoading(true);
+    setError('');
 
     try {
       // Use admin login handler which validates against allowlist
-      const result = await handleAdminLogin( username, password, firebaseSignIn );
+      const result = await handleAdminLogin(username, password, firebaseSignIn);
 
-      console.log( '[AdminLogin] Login successful:', result.user.email );
+      console.log('[AdminLogin] Login successful:', result.user.email);
 
       // Get full admin data from Firestore
-      const adminData = await getAdminByEmail( result.user.email );
+      const adminData = await getAdminByEmail(result.user.email);
 
       // Update last login timestamp
-      if ( adminData ) {
-        await updateAdminLastLogin( adminData.uid );
+      if (adminData) {
+        await updateAdminLastLogin(adminData.uid);
       }
 
       // Call success callback
-      if ( onLoginSuccess ) {
-        onLoginSuccess( {
+      if (onLoginSuccess) {
+        onLoginSuccess({
           user: result.user,
           admin: adminData,
           role: result.role,
           permissions: result.permissions,
           token: result.token
-        } );
+        });
       }
-    } catch ( err ) {
-      console.error( '[AdminLogin] Login error:', err );
-      const errorMessage = formatFirebaseAuthError( err );
-      setError( errorMessage );
+    } catch (err) {
+      console.error('[AdminLogin] Login error:', err);
+      const errorMessage = formatFirebaseAuthError(err);
+      setError(errorMessage);
     } finally {
-      setIsLoading( false );
+      setIsLoading(false);
     }
   };
 
-  if ( isCheckingAuth ) {
+  if (isCheckingAuth) {
     return (
       <div className="admin-login-container" suppressHydrationWarning>
         <div className="admin-login-box">
@@ -113,11 +111,11 @@ export default function AdminLogin ( { onLoginSuccess, allowedRoute = '/admin' }
       <div className="admin-login-box">
         <div className="admin-login-header">
           <div className="admin-login-icon">
-            <BrandLogo className="admin-logo-lg" alt="OnchainWeb" />
+            <img src="/logo.svg" alt="OnchainWeb" className="admin-logo-lg" />
           </div>
           <h1>Admin Access</h1>
           <p className="admin-login-subtitle">
-            {allowedRoute === ROUTES.MASTER_ADMIN ? 'Master Admin Portal' : 'Admin Panel'}
+            {allowedRoute === '/master-admin' ? 'Master Admin Portal' : 'Admin Panel'}
           </p>
         </div>
 
@@ -135,7 +133,7 @@ export default function AdminLogin ( { onLoginSuccess, allowedRoute = '/admin' }
               id="username"
               type="text"
               value={username}
-              onChange={( e ) => setUsername( e.target.value )}
+              onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter your username or email"
               required
               autoComplete="username"
@@ -149,7 +147,7 @@ export default function AdminLogin ( { onLoginSuccess, allowedRoute = '/admin' }
               id="password"
               type="password"
               value={password}
-              onChange={( e ) => setPassword( e.target.value )}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               required
               autoComplete="current-password"
