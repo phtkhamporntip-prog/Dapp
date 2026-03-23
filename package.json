@@ -5,6 +5,7 @@
   "description": "Snipe Trading Platform - Monorepo",
   "scripts": {
     "install:frontend": "cd Onchainweb && npm install",
+    "start": "npm run dev",
     "build": "cd Onchainweb && npm install && npm run build",
     "smoke": "bash scripts/smoke-test.sh",
     "dev": "cd Onchainweb && npm run dev",

@@ -68,7 +68,7 @@ export function validateEnvironment() {
       console.warn('Admin feature enabled without VITE_ADMIN_ALLOWLIST. Restrict admin access before production release.');
     }
   }
-  
+
   return { valid: true };
 }
 
