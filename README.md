@@ -86,7 +86,7 @@ This repository uses GitHub Actions for continuous integration and deployment. T
 ### Available Workflows
 
 - **CI** (): Runs on every push and PR to main — builds, lints, tests, smoke-tests
-- **Firebase Deploy** (): Deploys to Firebase Hosting on push to 
+- **Firebase Deploy** (): Deploys to Firebase Hosting on push to main
 - **Cloudflare Deploy** (): Deploys Workers + Pages (requires )
 - **Release** (): Creates a GitHub Release when a  tag is pushed
 - **Health Check** (): Monitors production URLs every 6 hours

@@ -61,6 +61,21 @@ These environment variables **MUST** be set for the application to function.
 - **Example**: `1:123456789012:web:abcdef1234567890`
 - **Where to get**: Firebase Console → Project Settings → General
 
+#### `VITE_FIREBASE_APPCHECK_SITE_KEY`
+
+- **Required**: Recommended for production
+- **Description**: Firebase App Check site key for reCAPTCHA provider
+- **Example**: `6LcXXXXXXXXXXXXXX`
+- **Where to get**: Firebase Console → App Check → Web App
+- **Production**: Required if you enforce App Check
+
+#### `VITE_FIREBASE_APPCHECK_DEBUG_TOKEN`
+
+- **Required**: No
+- **Description**: Debug token for App Check during local/preview testing
+- **Example**: `true` or a concrete token string from browser console
+- **Production**: **MUST NOT** be set in public production
+
 ### WalletConnect
 
 #### `VITE_WALLETCONNECT_PROJECT_ID`

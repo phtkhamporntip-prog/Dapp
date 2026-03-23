@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, doc, setDoc, getDoc, addDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -11,7 +12,10 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-let app, db, auth;
+const appCheckSiteKey = import.meta.env.VITE_FIREBASE_APPCHECK_SITE_KEY || '';
+const appCheckDebugToken = import.meta.env.VITE_FIREBASE_APPCHECK_DEBUG_TOKEN || '';
+
+let app, db, auth, appCheck;
 let isFirebaseAvailable = false;
 
 try {
@@ -19,6 +23,26 @@ try {
     app = initializeApp( firebaseConfig );
     db = getFirestore( app );
     auth = getAuth( app );
+
+    if ( typeof window !== 'undefined' && appCheckSiteKey ) {
+      try {
+        // Debug token is for local/preview troubleshooting only.
+        if ( appCheckDebugToken ) {
+          const globalScope = typeof globalThis !== 'undefined' ? globalThis : window;
+          globalScope.FIREBASE_APPCHECK_DEBUG_TOKEN = appCheckDebugToken === 'true'
+            ? true
+            : appCheckDebugToken;
+        }
+
+        appCheck = initializeAppCheck( app, {
+          provider: new ReCaptchaV3Provider( appCheckSiteKey ),
+          isTokenAutoRefreshEnabled: true
+        } );
+      } catch ( appCheckError ) {
+        console.error( 'Firebase App Check initialization error:', appCheckError );
+      }
+    }
+
     isFirebaseAvailable = true;
   }
 } catch ( error ) {
@@ -705,4 +729,4 @@ export const saveChatMessage = async ( chatId, senderId, text ) => {
 
 export const isFirebaseEnabled = () => isFirebaseAvailable;
 
-export { isFirebaseAvailable, onAuthStateChanged, auth, db, app };
+export { isFirebaseAvailable, onAuthStateChanged, auth, db, app, appCheck };

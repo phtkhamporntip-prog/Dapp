@@ -68,6 +68,15 @@ export function validateEnvironment() {
       console.warn('Admin feature enabled without VITE_ADMIN_ALLOWLIST. Restrict admin access before production release.');
     }
   }
+
+  // App Check is strongly recommended for public production deployments.
+  if (import.meta.env.PROD && !import.meta.env.VITE_FIREBASE_APPCHECK_SITE_KEY) {
+    console.warn('VITE_FIREBASE_APPCHECK_SITE_KEY is not set. Firebase App Check protection is not enabled in production.');
+  }
+
+  if (import.meta.env.PROD && import.meta.env.VITE_FIREBASE_APPCHECK_DEBUG_TOKEN) {
+    console.warn('VITE_FIREBASE_APPCHECK_DEBUG_TOKEN is set in production. Remove debug token for public release.');
+  }
   
   return { valid: true };
 }
