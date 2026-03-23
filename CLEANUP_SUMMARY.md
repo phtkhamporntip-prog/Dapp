@@ -6,28 +6,6 @@
 
 ---
 
-## PR Scope: Two Separate Changes
-
-This document covers **two distinct sets of changes** that are included together in PR #13:
-
-### 1. tabReply Deprecation Warning Fix
-
-**Scope**: Single-file bug fix in the chat component.
-
-The `tabReply` prop was deprecated in the underlying UI library and replaced with a newer API. This change updates `Onchainweb/src/components/Chat.jsx` (or equivalent) to remove the deprecated `tabReply` usage and adopt the current API, eliminating the console deprecation warning.
-
-**Impact**: Removes a browser console deprecation warning; no user-visible behavior change.
-
-### 2. Repository Cleanup (118 files)
-
-**Scope**: Documentation consolidation and removal of the deprecated backend.
-
-This is a separate, broader housekeeping effort to prepare the repository for public release. It is independent of the tabReply fix. See the sections below for full details.
-
-> **Note for reviewers**: These two changes have been combined in one PR for convenience. If you prefer to review them independently, the tabReply fix is scoped entirely to the chat component, while everything else in this document relates to the broader repository cleanup.
-
----
-
 ## Overview
 
 This document summarizes the comprehensive cleanup performed on the Snipe trading platform repository to prepare it for public release. The cleanup focused on removing deprecated code, consolidating documentation, and ensuring a clean, maintainable codebase.
