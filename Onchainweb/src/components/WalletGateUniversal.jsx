@@ -9,7 +9,7 @@
  * - Cross-platform session consistency
  */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useUniversalWallet, detectEnvironment, detectAvailableWallets } from '../lib/walletConnect.jsx'
 import { autoRegisterUser } from '../services/walletService.js'
 
@@ -22,6 +22,7 @@ export default function WalletGate({ onConnect, children, allowOpenAccess = fals
     const [environment, setEnvironment] = useState(null)
     const [availableWallets, setAvailableWallets] = useState([])
     const [skipGate, setSkipGate] = useState(false)
+    const registeredRef = useRef(false)
 
     // Detect environment and available wallets
     useEffect(() => {
@@ -36,56 +37,42 @@ export default function WalletGate({ onConnect, children, allowOpenAccess = fals
         }
     }, [allowOpenAccess])
 
-    // Register user in backend and Firebase
-    const registerUserInBackend = async (address, walletType) => {
-        try {
-            console.log('Registering user in Firebase:', address, walletType)
-            
-            // Register in Firebase (primary)
-            await autoRegisterUser(address)
-            
-            console.log('User registered in Firebase successfully')
-            
-            // Update local profile
-            const existingProfile = localStorage.getItem('userProfile')
-            const profileData = existingProfile ? JSON.parse(existingProfile) : {}
-            const updatedProfile = { 
-                ...profileData, 
-                wallet: address, 
-                walletType 
-            }
-            localStorage.setItem('userProfile', JSON.stringify(updatedProfile))
-            
-            return true
-        } catch (error) {
-            console.error('Failed to register user:', error)
-            return null
-        }
-    }
+    // Auto-register user in Firebase and notify parent once wallet is connected
+    useEffect(() => {
+        if (!wallet.isConnected || !wallet.address) return
+        if (registeredRef.current) return
+        registeredRef.current = true
 
-    // Handle wallet connection
+        autoRegisterUser(wallet.address).catch(console.error)
+
+        // Persist wallet profile locally for components that still read localStorage
+        try {
+            const existing = localStorage.getItem('userProfile')
+            const profile = existing ? JSON.parse(existing) : {}
+            localStorage.setItem('userProfile', JSON.stringify({ ...profile, wallet: wallet.address }))
+        } catch { /* ignore storage errors */ }
+
+        if (onConnect) onConnect(wallet.address)
+    }, [wallet.isConnected, wallet.address, onConnect])
+
+    // Reset registration flag when wallet disconnects
+    useEffect(() => {
+        if (!wallet.isConnected) registeredRef.current = false
+    }, [wallet.isConnected])
+
+    // Handle wallet connection — connectWallet is the correct method exposed by the context
     const handleConnect = async (walletId) => {
         setSelectedWallet(walletId)
         setIsConnecting(true)
         setError('')
 
         try {
-            const result = await wallet.connect(walletId)
-
-            // Register in backend
-            await registerUserInBackend(result.address, walletId)
-
-            if (onConnect) {
-                onConnect(result.address)
-            }
-
-            // Connection successful - wallet state will update and children will render
-            // No need to reload, React will re-render automatically
-            console.log('[WalletGate] Connection successful:', result.address)
-
+            await wallet.connectWallet(walletId)
+            // Address and connection state are updated reactively via the context;
+            // the useEffect above handles post-connect registration.
         } catch (err) {
-            if (err.message !== 'REDIRECT_TO_WALLET') {
-                setError(err.message || 'Connection failed. Please try again.')
+            if (err?.message !== 'REDIRECT_TO_WALLET') {
+                setError(err?.message || 'Connection failed. Please try again.')
             }
         } finally {
             setIsConnecting(false)

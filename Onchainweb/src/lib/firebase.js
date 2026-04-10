@@ -276,8 +276,8 @@ export const subscribeToTradingAdminSettings = ( callback ) => {
   }, emitLocal );
 };
 
-export const subscribeToAiArbitrageInvestments = ( callback ) => {
-  return subscribeToAiArbitrageRecords( callback, { completed: false } );
+export const subscribeToAiArbitrageInvestments = ( userId, callback ) => {
+  return subscribeToAiArbitrageRecords( callback, { userId, completed: false } );
 };
 
 export const subscribeToAiArbitrageHistory = ( userId, callback, options = {} ) => {

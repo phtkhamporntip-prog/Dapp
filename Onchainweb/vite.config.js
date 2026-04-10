@@ -63,27 +63,15 @@ export default defineConfig(({ mode }) => {
             '@wagmi/connectors': path.resolve(__dirname, 'node_modules/@wagmi/connectors'),
         },
     },
-    esbuild: {
-        loader: 'jsx',
-        include: /src\/.*\.jsx?$/,
-        exclude: [],
-        drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
-    },
     optimizeDeps: {
         include: ['@web3modal/ethers', 'ethers', 'ethers/lib/utils', '@wagmi/core', '@wagmi/connectors'],
-        esbuildOptions: {
-            loader: {
-                '.js': 'jsx',
-            },
+        rolldownOptions: {
+            plugins: [],
         },
     },
     build: {
         target: 'es2020',
-        minify: 'esbuild',
-        esbuildOptions: {
-            drop: ['console', 'debugger'],
-            legalComments: 'none',
-        },
+        minify: 'oxc',
         rollupOptions: {
             output: {
                 manualChunks(id) {

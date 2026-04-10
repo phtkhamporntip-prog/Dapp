@@ -89,6 +89,26 @@ service cloud.firestore {
         // Users can also update their own rate limits to track requests
         allow write: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
       }
+
+      // Binary Trades Subcollection - scoped per user
+      match /binaryTrades/{tradeId} {
+        // Users can read their own trades; admins can read all
+        allow read: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
+        // Users can create trades in their own subcollection
+        allow create: if isAuthenticated() && request.auth.uid == userId;
+        // Users can update (settle) their own trades; admins can override
+        allow update: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
+        // No delete by regular users
+        allow delete: if isAdmin();
+      }
+
+      // Futures Positions Subcollection - scoped per user
+      match /futuresPositions/{positionId} {
+        allow read: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
+        allow create: if isAuthenticated() && request.auth.uid == userId;
+        allow update: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
+        allow delete: if isAdmin();
+      }
     }
 
     // ============================================
@@ -238,6 +258,38 @@ service cloud.firestore {
       
       // Only admins can write settings
       allow write: if isAdmin();
+    }
+
+    // ============================================
+    // App Settings Collection (Trading / Admin Config)
+    // Used by subscribeToTradingAdminSettings for binary/AI levels
+    // ============================================
+    match /appSettings/{document=**} {
+      // All authenticated users can read trading configuration
+      allow read: if true;
+      
+      // Only admins can update trading settings
+      allow write: if isAdmin();
+    }
+
+    // ============================================
+    // AI Arbitrage Investments Collection
+    // ============================================
+    match /aiArbitrageInvestments/{investmentId} {
+      // Users can read their own investments; admins can read all
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Users can create investments for themselves
+      allow create: if isAuthenticated() &&
+                       request.resource.data.userId == request.auth.uid;
+
+      // Users can update (complete) their own investments; admins can update any
+      allow update: if isAuthenticated() &&
+                       (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Only admins can delete
+      allow delete: if isAdmin();
     }
 
     // ============================================
