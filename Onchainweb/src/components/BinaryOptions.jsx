@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Toast from './Toast.jsx';
 import { useMarketData } from '../hooks/useMarketData';
+import { useUniversalWallet } from '../lib/walletConnect.jsx';
 import {
     closeBinaryTrade,
     getTradingAdminSettings,
@@ -33,10 +34,14 @@ export default function BinaryOptions ( { isOpen = true, onClose } ) {
     const location = useLocation();
     const navigate = useNavigate();
     const { cryptoData, isLiveData } = useMarketData( { refreshInterval: 10000 } );
+    const { address: walletAddress } = useUniversalWallet();
 
     const [ toast, setToast ] = useState( { message: '', type: '' } );
     const [ settings, setSettings ] = useState( null );
-    const [ userId ] = useState( () => localStorage.getItem( 'walletAddress' ) || localStorage.getItem( 'wallet_address' ) || 'guest' );
+    const userId = walletAddress
+        || localStorage.getItem( 'wallet_address' )
+        || localStorage.getItem( 'walletAddress' )
+        || 'guest';
     const [ balance, setBalance ] = useState( () => parseFloat( localStorage.getItem( 'userBalance' ) || '0' ) );
     const [ pair, setPair ] = useState( 'BTC/USDT' );
     const [ selectedLevelId, setSelectedLevelId ] = useState( '' );
@@ -181,7 +186,7 @@ export default function BinaryOptions ( { isOpen = true, onClose } ) {
 
         const nextBalance = balance - parsedAmount;
         const trade = {
-            id: String( Date.now() ),
+            id: crypto.randomUUID(),
             pair,
             userId,
             type: 'binary',

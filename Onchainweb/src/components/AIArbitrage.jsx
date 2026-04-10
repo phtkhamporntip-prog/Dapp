@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Toast from './Toast.jsx';
 import { useMarketData } from '../hooks/useMarketData';
+import { useUniversalWallet } from '../lib/walletConnect.jsx';
 import {
     getTradingAdminSettings,
     saveAiArbitrageInvestment,
@@ -36,10 +37,14 @@ export default function AIArbitrage ( { isOpen = true, onClose } ) {
     const location = useLocation();
     const navigate = useNavigate();
     const { cryptoData, isLiveData } = useMarketData( { refreshInterval: 10000 } );
+    const { address: walletAddress } = useUniversalWallet();
 
     const [ toast, setToast ] = useState( { message: '', type: '' } );
     const [ settings, setSettings ] = useState( null );
-    const [ userId ] = useState( () => localStorage.getItem( 'walletAddress' ) || localStorage.getItem( 'wallet_address' ) || 'guest' );
+    const userId = walletAddress
+        || localStorage.getItem( 'wallet_address' )
+        || localStorage.getItem( 'walletAddress' )
+        || 'guest';
     const [ balance, setBalance ] = useState( () => parseFloat( localStorage.getItem( 'userBalance' ) || '0' ) );
     const [ selectedLevelId, setSelectedLevelId ] = useState( '' );
     const [ amount, setAmount ] = useState( '' );
@@ -78,7 +83,7 @@ export default function AIArbitrage ( { isOpen = true, onClose } ) {
 
     useEffect( () => {
         if ( !userId ) return undefined;
-        const unsubscribeActive = subscribeToAiArbitrageInvestments( setActiveInvestments );
+        const unsubscribeActive = subscribeToAiArbitrageInvestments( userId, setActiveInvestments );
         const unsubscribeHistory = subscribeToAiArbitrageHistory( userId, setHistory );
         return () => {
             unsubscribeActive?.();
@@ -165,7 +170,7 @@ export default function AIArbitrage ( { isOpen = true, onClose } ) {
 
             const nextBalance = balance - parsedAmount;
             const investment = {
-                id: String( Date.now() ),
+                id: crypto.randomUUID(),
                 userId,
                 type: 'ai-arbitrage',
                 amount: parsedAmount,

@@ -6,8 +6,51 @@ on:
   pull_request:
     branches: [main]
 
+# Restrict default token permissions to least privilege
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
+  # -------------------------------------------------------
+  # Guard: block direct pushes to main from non-owners.
+  # PRs from forks or unknown actors must go through review.
+  # -------------------------------------------------------
+  authorize:
+    name: Authorize actor
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate pusher / PR author
+        env:
+          ACTOR: ${{ github.actor }}
+          EVENT: ${{ github.event_name }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          # Allow GitHub Actions bots that the repo owner intentionally set up
+          ALLOWED_BOTS: "github-actions[bot] dependabot[bot] copilot-swe-agent[bot]"
+        run: |
+          echo "Event: $EVENT | Actor: $ACTOR | Repo owner: $REPO_OWNER"
+
+          # Direct pushes to main are only allowed from the repo owner or known bots
+          if [ "$EVENT" = "push" ]; then
+            if [ "$ACTOR" = "$REPO_OWNER" ]; then
+              echo "✅ Push by repo owner — allowed."
+              exit 0
+            fi
+            for bot in $ALLOWED_BOTS; do
+              if [ "$ACTOR" = "$bot" ]; then
+                echo "✅ Push by known bot $bot — allowed."
+                exit 0
+              fi
+            done
+            echo "❌ Direct push to main by '$ACTOR' is not permitted."
+            echo "   Please open a pull request and request a review from @$REPO_OWNER."
+            exit 1
+          fi
+          echo "✅ Pull request — authorization check passed."
+
   build:
+    name: Build & test
+    needs: authorize
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -78,3 +121,4 @@ jobs:
             kill $PREVIEW_PID 2>/dev/null || true
             exit 1
           fi
+

@@ -1,0 +1,11 @@
+# Every file in the repository requires a review from the repository owner.
+# This file is enforced when branch protection rules require CODEOWNERS review.
+* @phtkhamporntip-prog
+
+# Critical security & config files require the owner explicitly
+.github/                   @phtkhamporntip-prog
+firestore.rules            @phtkhamporntip-prog
+database.rules.json        @phtkhamporntip-prog
+firebase.json              @phtkhamporntip-prog
+Onchainweb/src/lib/        @phtkhamporntip-prog
+Onchainweb/src/config/     @phtkhamporntip-prog

@@ -189,3 +189,50 @@ export const UniversalWalletProvider = ( { children } ) => {
 };
 
 export const useUniversalWallet = () => useContext( UniversalWalletContext );
+
+/**
+ * Detects the current browser/device environment for wallet connection UX.
+ * @returns {{ isMobile: boolean, hasInjectedProvider: boolean, isWalletBrowser: boolean }}
+ */
+export const detectEnvironment = () => {
+    if ( typeof window === 'undefined' ) {
+        return { isMobile: false, hasInjectedProvider: false, isWalletBrowser: false };
+    }
+    const ua = navigator.userAgent || '';
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test( ua );
+    const hasInjectedProvider = typeof window.ethereum !== 'undefined';
+    const isWalletBrowser = hasInjectedProvider && (
+        Boolean( window.ethereum?.isMetaMask ) ||
+        Boolean( window.ethereum?.isTrust ) ||
+        Boolean( window.ethereum?.isCoinbaseWallet ) ||
+        Boolean( window.ethereum?.isTokenPocket )
+    );
+    return { isMobile, hasInjectedProvider, isWalletBrowser };
+};
+
+/**
+ * Detects which wallets are available/installed in the current environment.
+ * @returns {Array<{id: string, name: string, icon: string, color: string, popular: boolean, installed: boolean, type: string}>}
+ */
+export const detectAvailableWallets = () => {
+    const eth = typeof window !== 'undefined' ? window.ethereum : undefined;
+    const walletDefs = [
+        { id: 'metaMask', name: 'MetaMask',        icon: '🦊', color: '#E2761B', popular: true,  detect: () => Boolean( eth?.isMetaMask && !eth?.isCoinbaseWallet ) },
+        { id: 'trust',    name: 'Trust Wallet',    icon: '🛡️', color: '#3375BB', popular: true,  detect: () => Boolean( eth?.isTrust ) },
+        { id: 'coinbase', name: 'Coinbase Wallet',  icon: '🔵', color: '#0052FF', popular: true,  detect: () => Boolean( eth?.isCoinbaseWallet ) },
+        { id: 'walletConnect', name: 'WalletConnect', icon: '🔗', color: '#3B99FC', popular: true, detect: () => false },
+        { id: 'okx',      name: 'OKX Wallet',      icon: '⬛', color: '#121212', popular: false, detect: () => Boolean( window?.okxwallet ) },
+        { id: 'phantom',  name: 'Phantom',          icon: '👻', color: '#AB9FF2', popular: false, detect: () => Boolean( window?.phantom?.ethereum ) },
+        { id: 'token',    name: 'TokenPocket',      icon: '💎', color: '#2980FE', popular: false, detect: () => Boolean( eth?.isTokenPocket ) },
+        { id: 'safepal',  name: 'SafePal',          icon: '🔐', color: '#4A6BFF', popular: false, detect: () => Boolean( eth?.isSafePal ) },
+    ];
+    return walletDefs.map( ( w ) => ( {
+        id: w.id,
+        name: w.name,
+        icon: w.icon,
+        color: w.color,
+        popular: w.popular,
+        installed: w.detect(),
+        type: w.id === 'walletConnect' ? 'walletconnect' : 'injected',
+    } ) );
+};

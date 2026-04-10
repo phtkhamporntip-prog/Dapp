@@ -13,6 +13,7 @@ import CustomerService from './components/CustomerService';
 import BottomNav from './components/BottomNav';
 import NotFound from './components/NotFound';
 import ErrorBoundary from './components/ErrorBoundary';
+import WalletGateUniversal from './components/WalletGateUniversal';
 
 function App () {
   return (
@@ -22,10 +23,28 @@ function App () {
         <main className="main-content" id="main">
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/trade" element={<Trade />} />
-            <Route path="/trade/binary-options/*" element={<BinaryOptions />} />
-            <Route path="/trade/ai-arbitrage/*" element={<AIArbitrage />} />
-            <Route path="/wallet" element={<Wallet isOpen />} />
+            {/* Trading routes require wallet connection */}
+            <Route path="/trade" element={
+              <WalletGateUniversal>
+                <Trade />
+              </WalletGateUniversal>
+            } />
+            <Route path="/trade/binary-options/*" element={
+              <WalletGateUniversal>
+                <BinaryOptions />
+              </WalletGateUniversal>
+            } />
+            <Route path="/trade/ai-arbitrage/*" element={
+              <WalletGateUniversal>
+                <AIArbitrage />
+              </WalletGateUniversal>
+            } />
+            {/* Wallet page requires wallet connection */}
+            <Route path="/wallet" element={
+              <WalletGateUniversal>
+                <Wallet isOpen />
+              </WalletGateUniversal>
+            } />
             <Route path="/customer-service" element={<CustomerService />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
